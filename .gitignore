@@ -106,3 +106,6 @@ ENV/
 # macOS dot files
 .DS_Store
 ._*
+
+# do not source-control the raw script assets
+assets/
