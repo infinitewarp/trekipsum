@@ -1,7 +1,6 @@
 import os
-from unittest import mock
 
-import six
+import mock
 
 from trekipsum import scrape
 
@@ -16,7 +15,7 @@ def test_parse_script_tng(mock_scrape_script):
     assert mock_scrape_script.called is False
 
     assert len(parsed_dialog) > 0
-    assert set(six.iterkeys(parsed_dialog)) == set(('PIKARD', 'BROI', 'DORF', 'DADA', 'Z'))
+    assert set(parsed_dialog.keys()) == set(('PIKARD', 'BROI', 'DORF', 'DADA', 'Z'))
 
     assert len(parsed_dialog['PIKARD']) == 9
     assert len(parsed_dialog['BROI']) == 2
