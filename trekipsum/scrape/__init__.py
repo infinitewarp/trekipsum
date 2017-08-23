@@ -168,7 +168,8 @@ def parse_voyager():
     raise NotImplementedError()
 
 
-if __name__ == '__main__':
+def main():
+    """Execute module as CLI program."""
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
     logger.setLevel(logging.DEBUG)
 
@@ -177,10 +178,10 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
 
     types_group = parser.add_argument_group('include script sources')
-    parser.add_argument('--all', help='all', action='store_true')
-    parser.add_argument('--movies', help='movies', action='store_true')
-    parser.add_argument('--tng', help='the next generation', action='store_true')
-    parser.add_argument('--ds9', help='deep space nine', action='store_true')
+    types_group.add_argument('--all', help='all', action='store_true')
+    types_group.add_argument('--movies', help='movies', action='store_true')
+    types_group.add_argument('--tng', help='the next generation', action='store_true')
+    types_group.add_argument('--ds9', help='deep space nine', action='store_true')
 
     args = parser.parse_args()
 
@@ -219,3 +220,7 @@ if __name__ == '__main__':
         logger.info('dumping pickle to %s', pickle_path)
         with open(pickle_path, 'wb') as pickle_file:
             pickle.dump(all_scripts, pickle_file)
+
+
+if __name__ == '__main__':
+    main()
