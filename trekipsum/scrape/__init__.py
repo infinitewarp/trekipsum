@@ -72,7 +72,13 @@ def extract_lines(script):
         # if we find a line of dialog, append it to a running thread of dialog
         dialog_match = dialog_matcher.match(line)
         if dialog_match:
-            current_dialog = '{} {}'.format(current_dialog, dialog_match.group(1).strip()).strip()
+            new_dialog = dialog_match.group(1).strip()
+            if len(current_dialog) > 0:
+                if current_dialog.endswith('...'):
+                    current_dialog = current_dialog.rstrip('. ')
+                if new_dialog.startswith('...'):
+                    new_dialog = new_dialog.lstrip('. ')
+            current_dialog = '{} {}'.format(current_dialog, new_dialog).strip()
             continue
 
         # if we find a new speaker, save the current thread for the last speaker, reset speaker,
