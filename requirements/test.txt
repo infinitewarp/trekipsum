@@ -1,3 +1,4 @@
 -r local.txt
 -r scrape.txt
 mock
+coveralls
