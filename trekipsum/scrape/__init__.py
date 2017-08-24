@@ -4,9 +4,9 @@ import argparse
 import json
 import logging
 import os
+import pickle
 import re
 
-import pickle
 import requests
 import six
 from envparse import env
