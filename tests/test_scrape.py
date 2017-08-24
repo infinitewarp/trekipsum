@@ -1,10 +1,24 @@
 import os
+import shlex
 
 import mock
 
 from trekipsum import scrape
 
 test_assets_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+
+
+def test_parse_cli_args():
+    """Test parse_cli_args for typical CLI arguments."""
+    cli_args = shlex.split('. --tng -j foo.json --ds9')
+    with mock.patch('argparse._sys.argv', cli_args):
+        args = scrape.parse_cli_args()
+    assert args.all is False
+    assert args.movies is False
+    assert args.tng is True
+    assert args.ds9 is True
+    assert args.json == 'foo.json'
+    assert args.pickle is None
 
 
 @mock.patch('trekipsum.scrape.scrape_script')

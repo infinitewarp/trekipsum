@@ -168,11 +168,8 @@ def parse_voyager():
     raise NotImplementedError()
 
 
-def main():
-    """Execute module as CLI program."""
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
-    logger.setLevel(logging.DEBUG)
-
+def parse_cli_args():
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='Script dialog scraper')
     parser.add_argument('-j', '--json', type=str, help='path to write json file')
     parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
@@ -183,7 +180,15 @@ def main():
     types_group.add_argument('--tng', help='the next generation', action='store_true')
     types_group.add_argument('--ds9', help='deep space nine', action='store_true')
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    """Execute module as CLI program."""
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+    logger.setLevel(logging.DEBUG)
+
+    args = parse_cli_args()
 
     parsed_scripts = []
     if args.movies or args.all:
