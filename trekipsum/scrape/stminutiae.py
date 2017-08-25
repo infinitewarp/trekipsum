@@ -3,15 +3,14 @@ import os
 import re
 
 import requests
-from envparse import env
 
 from .utils import magicdictset
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_ASSETS_PATH = env('ASSETS_PATH', default=os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'assets'))
+DEFAULT_ASSETS_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'assets')
 
 
 class Scraper(object):
