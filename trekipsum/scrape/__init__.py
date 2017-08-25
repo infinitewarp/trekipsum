@@ -1,135 +1,15 @@
-from __future__ import print_function
-
 import argparse
 import json
 import logging
 import os
 import pickle
-import re
 
-import requests
 import six
-from envparse import env
+
+from .stminutiae import Scraper as STMScraper
+from .utils import magicdictset
 
 logger = logging.getLogger(__name__)
-
-# https://regex101.com/r/WBYM0F/1
-speaker_matcher = re.compile(r'^(?:\t{5}|\ {43})\"?(?!ACT)((?:[a-zA-Z0-9#\-/&]|\.[\ \w]|\.(?=\')|\ (?!V\.O\.|\(|COM\ )|\'(?!S(?![\w])))+)\.?.*$')  # noqa
-dialog_matcher = re.compile(r'^(?:\t{3}|\ {29}|\ {30})([^\t\ ].+)$')
-break_matcher = re.compile(r'^\s*END OF ACT')
-# dialog_break_matcher = re.compile(r'^(?:\t{4})((?!\(continuing\))[^\t\ ].+)$')
-
-assets_path = env('ASSETS_PATH', default=os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'assets'))
-
-
-class magicdictset(dict):
-    """Helper class to add conveniences to dict."""
-
-    def __getitem__(self, key):
-        """Extend getitem behavior to create if not found."""
-        if key not in self:
-            dict.__setitem__(self, key, set())
-        return dict.__getitem__(self, key)
-
-    def updateunion(self, other):
-        """Update values using set union."""
-        for key in other:
-            try:
-                my_set = dict.__getitem__(self, key)
-                other_set = dict.__getitem__(other, key)
-                my_set = my_set.union(other_set)
-                dict.__setitem__(self, key, my_set)
-            except KeyError:
-                other_set = dict.__getitem__(other, key)
-                dict.__setitem__(self, key, other_set)
-
-
-def extract_lines(script):
-    """
-    Extract lines of dialog from a script.
-
-    Args:
-        script (list): list of strings that make up a script
-
-    Returns:
-        dict: speaker names as keys with lists of strings for their dialog
-    """
-    lines = magicdictset()
-    current_speaker = None
-    current_dialog = ''
-    dialog_counter = 0
-    for line in script:
-
-        # if we find what appears to be a break in dialog, save the current thread and reset thread.
-        break_match = break_matcher.match(line)
-        if break_match and current_speaker is not None and len(current_dialog) > 0:
-            lines[current_speaker].add(current_dialog)
-            dialog_counter += 1
-            current_dialog = ''
-            continue
-
-        # if we find a line of dialog, append it to a running thread of dialog
-        dialog_match = dialog_matcher.match(line)
-        if dialog_match:
-            new_dialog = dialog_match.group(1).strip()
-            if len(current_dialog) > 0:
-                if current_dialog.endswith('...'):
-                    current_dialog = current_dialog.rstrip('. ')
-                if new_dialog.startswith('...'):
-                    new_dialog = new_dialog.lstrip('. ')
-            current_dialog = '{} {}'.format(current_dialog, new_dialog).strip()
-            continue
-
-        # if we find a new speaker, save the current thread for the last speaker, reset speaker,
-        # and reset thread.
-        speaker_match = speaker_matcher.match(line)
-        if speaker_match:
-            new_speaker = speaker_match.group(1).upper().strip()
-            if current_speaker != new_speaker:
-                if len(current_dialog) > 0:
-                    if current_speaker is None:
-                        logger.error('discarding dialog with no speaker: %s', current_dialog)
-                    else:
-                        current_dialog = current_dialog.replace('... ...', '')
-                        lines[current_speaker].add(current_dialog)
-                        dialog_counter += 1
-                current_speaker = new_speaker
-                current_dialog = ''
-
-    if current_speaker is not None and len(current_dialog) > 0:
-        current_dialog = current_dialog.replace('... ...', '')
-        lines[current_speaker].add(current_dialog)
-        dialog_counter += 1
-
-    logger.debug('found %s spoken lines for %s speakers', dialog_counter, len(lines.keys()))
-    return lines
-
-
-def parse_script(script_id):
-    """Parse plaintext script, downloading file if needed."""
-    file_path = os.path.join(assets_path, '{}.txt'.format(script_id))
-    if not os.path.isfile(file_path):
-        scrape_script(script_id, file_path)
-    lines = magicdictset()
-    if os.path.isfile(file_path):
-        with open(file_path) as f:
-            logger.debug('extracting dialog from %s', file_path)
-            lines = extract_lines(f)
-    return lines
-
-
-def scrape_script(script_id, to_file_path):
-    """Scrape script from st-minutiae.com."""
-    url = 'http://www.st-minutiae.com/resources/scripts/{}.txt'.format(script_id)
-    logger.debug('attempting to download script from %s', url)
-    response = requests.get(url)
-    if response:
-        with open(to_file_path, mode='w') as f:
-            f.write(response.text)
-    else:
-        logger.error('could not fetch %s: %s %s',
-                     response.url, response.status_code, response.reason)
 
 
 def parse_movies():
@@ -140,24 +20,27 @@ def parse_movies():
         'ins', 'nem',
     ]
     parsed_scripts = []
+    scraper = STMScraper()
     for script_id in ids:
-        parsed_scripts.append(parse_script(script_id))
+        parsed_scripts.append(scraper.parse_script(script_id))
     return parsed_scripts
 
 
 def parse_tng():
     """Parse TNG scripts."""
     parsed_scripts = []
+    scraper = STMScraper()
     for script_id in range(102, 277 + 1):
-        parsed_scripts.append(parse_script(script_id))
+        parsed_scripts.append(scraper.parse_script(script_id))
     return parsed_scripts
 
 
 def parse_ds9():
     """Parse DS9 scripts."""
     parsed_scripts = []
+    scraper = STMScraper()
     for script_id in range(402, 575 + 1):
-        parsed_scripts.append(parse_script(script_id))
+        parsed_scripts.append(scraper.parse_script(script_id))
     return parsed_scripts
 
 
@@ -183,7 +66,7 @@ def parse_cli_args():
     return parser.parse_args()
 
 
-def main():
+def main_cli():
     """Execute module as CLI program."""
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
     logger.setLevel(logging.DEBUG)
@@ -225,7 +108,3 @@ def main():
         logger.info('dumping pickle to %s', pickle_path)
         with open(pickle_path, 'wb') as pickle_file:
             pickle.dump(all_scripts, pickle_file)
-
-
-if __name__ == '__main__':
-    main()
