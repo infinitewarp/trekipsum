@@ -39,7 +39,9 @@ def parse_ds9():
     """Parse DS9 scripts."""
     parsed_scripts = []
     scraper = STMScraper()
-    for script_id in range(402, 575 + 1):
+    for script_id in range(402, 472 + 1):
+        parsed_scripts.append(scraper.parse_script(script_id))
+    for script_id in range(474, 575 + 1):
         parsed_scripts.append(scraper.parse_script(script_id))
     return parsed_scripts
 

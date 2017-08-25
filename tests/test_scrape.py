@@ -39,7 +39,7 @@ def test_parse_tng(mock_parse_script):
 @mock.patch('trekipsum.scrape.STMScraper.parse_script')
 def test_parse_ds9(mock_parse_script):
     """Test parse_ds9 attempts parsing expected number of DS9 scripts."""
-    expected_count = 174  # TODO verify should this actually be 176?
+    expected_count = 173  # TODO verify should this actually be 176?
     parsed_scripts = scrape.parse_ds9()
     assert mock_parse_script.call_count == expected_count
     assert len(parsed_scripts) == expected_count
