@@ -1,8 +1,11 @@
 import shlex
 
-import mock
-
 from trekipsum import scrape
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 
 def test_parse_cli_args():

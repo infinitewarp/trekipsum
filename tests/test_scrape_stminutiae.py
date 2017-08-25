@@ -1,8 +1,11 @@
 import os
 
-import mock
-
 from trekipsum.scrape import stminutiae
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 TEST_ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 

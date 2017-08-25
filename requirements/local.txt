@@ -1,22 +1,5 @@
 -r base.txt
-
-# Testing
+-r scrape.txt
+-r test.txt
+-r lint.txt
 tox
-pytest
-pytest-cov
-pytest-pep8
-pytest-flakes
-pytest-mccabe
-nose-cov
-
-# Packaging
-wheel
-
-# Coding standards
-flake8
-flake8-blind-except
-flake8-docstrings>=1.1.0
-flake8-isort
-flake8-quotes
-isort
-pydocstyle>=2.0.0

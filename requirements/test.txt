@@ -1,5 +1,6 @@
--r local.txt
--r scrape.txt
-mock
-coveralls
-codecov
+# Testing
+pytest
+pytest-cov
+pytest-pep8
+pytest-flakes
+# pytest-mccabe  # maybe later

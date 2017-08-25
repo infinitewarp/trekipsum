@@ -1,0 +1,8 @@
+# Coding standards
+flake8
+flake8-blind-except
+flake8-docstrings>=1.1.0
+flake8-isort
+flake8-quotes
+isort
+pydocstyle>=2.0.0
