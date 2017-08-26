@@ -4,10 +4,8 @@ import logging
 import os
 import pickle
 
-import six
-
 from .stminutiae import Scraper as STMScraper
-from .utils import magicdictset
+from .utils import magicdictlist
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +20,7 @@ def parse_movies():
     parsed_scripts = []
     scraper = STMScraper()
     for script_id in ids:
-        parsed_scripts.append(scraper.parse_script(script_id))
+        parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
 
@@ -31,7 +29,7 @@ def parse_tng():
     parsed_scripts = []
     scraper = STMScraper()
     for script_id in range(102, 277 + 1):
-        parsed_scripts.append(scraper.parse_script(script_id))
+        parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
 
@@ -40,9 +38,9 @@ def parse_ds9():
     parsed_scripts = []
     scraper = STMScraper()
     for script_id in range(402, 472 + 1):
-        parsed_scripts.append(scraper.parse_script(script_id))
+        parsed_scripts += scraper.extract_dialog(script_id)
     for script_id in range(474, 575 + 1):
-        parsed_scripts.append(scraper.parse_script(script_id))
+        parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
 
@@ -58,6 +56,7 @@ def parse_cli_args():
     parser = argparse.ArgumentParser(description='Script dialog scraper')
     parser.add_argument('-j', '--json', type=str, help='path to write json file')
     parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
+    parser.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
 
     types_group = parser.add_argument_group('include script sources')
     types_group.add_argument('--all', help='all', action='store_true')
@@ -75,38 +74,54 @@ def main_cli():
 
     args = parse_cli_args()
 
-    parsed_scripts = []
+    all_dialog = []
     if args.movies or args.all:
         logger.info('reading movie scripts')
-        parsed_scripts += parse_movies()
+        all_dialog += parse_movies()
     if args.tng or args.all:
         logger.info('reading tng scripts')
-        parsed_scripts += parse_tng()
+        all_dialog += parse_tng()
     if args.ds9 or args.all:
         logger.info('reading ds9 scripts')
-        parsed_scripts += parse_ds9()
+        all_dialog += parse_ds9()
 
-    all_scripts = magicdictset()
-    logger.info('combining data from multiple scripts')
+    if args.raw:
+        _write_raw(args.raw, all_dialog)
 
-    counter = 0
-    for parsed_script in parsed_scripts:
-        counter += 1
-        logger.debug('combining %s of %s', counter, len(parsed_scripts))
-        all_scripts.updateunion(parsed_script)
-        # for speaker, lines in six.iteritems(parsed_script):
-        #     for line in lines:
-        #         all_scripts[speaker].add(line)
+    if args.json or args.pickle:
+        dialog_dict = _dictify_dialog(all_dialog)
 
     if args.json:
-        json_path = os.path.abspath(args.json)
-        logger.info('dumping json to %s', json_path)
-        scripts_dict = dict((speaker, list(lines)) for speaker, lines in six.iteritems(all_scripts))
-        with open(json_path, 'w') as json_file:
-            json.dump(scripts_dict, json_file, indent=4)
+        _write_json(args.json, dialog_dict)
 
     if args.pickle:
-        pickle_path = os.path.abspath(args.pickle)
-        logger.info('dumping pickle to %s', pickle_path)
-        with open(pickle_path, 'wb') as pickle_file:
-            pickle.dump(all_scripts, pickle_file)
+        _write_pickle(args.pickle, dialog_dict)
+
+
+def _write_raw(raw_path, all_dialog, format='{speaker}:\n{line}\n\n'):
+    raw_path = os.path.abspath(raw_path)
+    logger.info('dumping raw to %s', raw_path)
+    with open(raw_path, 'w') as raw_file:
+        for speaker, line in all_dialog:
+            raw_file.write(format.format(speaker=speaker, line=line))
+
+
+def _dictify_dialog(all_dialog):
+    dialog_dictset = magicdictlist()
+    for speaker, line in all_dialog:
+        dialog_dictset[speaker].append(line)
+    return dialog_dictset.dedupe()
+
+
+def _write_json(json_path, dialog_dict):
+    json_path = os.path.abspath(json_path)
+    logger.info('dumping json to %s', json_path)
+    with open(json_path, 'w') as json_file:
+        json.dump(dialog_dict, json_file, indent=4)
+
+
+def _write_pickle(pickle_path, dialog_dict):
+    pickle_path = os.path.abspath(pickle_path)
+    logger.info('dumping pickle to %s', pickle_path)
+    with open(pickle_path, 'wb') as pickle_file:
+        pickle.dump(dialog_dict, pickle_file)

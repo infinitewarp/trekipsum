@@ -1,20 +1,15 @@
-class magicdictset(dict):
+class magicdictlist(dict):
     """Helper class to add conveniences to dict."""
 
     def __getitem__(self, key):
         """Extend getitem behavior to create if not found."""
         if key not in self:
-            dict.__setitem__(self, key, set())
+            dict.__setitem__(self, key, list())
         return dict.__getitem__(self, key)
 
-    def updateunion(self, other):
-        """Update values using set union."""
-        for key in other:
-            try:
-                my_set = dict.__getitem__(self, key)
-                other_set = dict.__getitem__(other, key)
-                my_set = my_set.union(other_set)
-                dict.__setitem__(self, key, my_set)
-            except KeyError:
-                other_set = dict.__getitem__(other, key)
-                dict.__setitem__(self, key, other_set)
+    def dedupe(self):
+        """Return new magicdictlist with de-duplicated lists."""
+        newdictlist = magicdictlist()
+        for key in self.keys():
+            newdictlist[key] = list(set(dict.__getitem__(self, key)))
+        return newdictlist
