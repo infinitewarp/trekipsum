@@ -69,7 +69,7 @@ class Extractor(object):
         # https://regex101.com/r/WBYM0F/1
         self.speaker_matcher = re.compile(r'^(?:\t{5}|\ {43})\"?(?!ACT)((?:[a-zA-Z0-9#\-/&]|\.[\ \w]|\.(?=\')|\ (?!V\.O\.|\(|COM\ )|\'(?!S(?![\w])))+)\.?.*$')  # noqa
         self.dialog_matcher = re.compile(r'^(?:\t{3}|\ {29}|\ {30})([^\t\ ].+)$')
-        self.break_matcher = re.compile(r'^\s*END OF ACT')
+        self.break_matcher = re.compile(r'^\s*END OF ')
 
         self.blacklisted_speakers = (
             'STORY BY',
