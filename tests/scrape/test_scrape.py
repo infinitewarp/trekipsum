@@ -1,3 +1,5 @@
+import json
+import pickle
 import shlex
 import tempfile
 
@@ -96,12 +98,40 @@ def test_write_raw():
         ('PIKARD', 'Make it so.'),
         ('PIKARD', 'Engage.'),
     ]
-    expected_output = b'SPORK:\nIllogical.\n\n' \
-                      b'PIKARD:\nEngage.\n\n' \
-                      b'PIKARD:\nMake it so.\n\n' \
-                      b'PIKARD:\nEngage.\n\n'
-    with tempfile.NamedTemporaryFile() as the_file:
+    expected_output = 'SPORK:\nIllogical.\n\n' \
+                      'PIKARD:\nEngage.\n\n' \
+                      'PIKARD:\nMake it so.\n\n' \
+                      'PIKARD:\nEngage.\n\n'
+    with tempfile.NamedTemporaryFile(mode='w+') as the_file:
         scrape._write_raw(the_file.name, dummy_dialog)
         the_file.seek(0)
         written_contents = the_file.read()
         assert written_contents == expected_output
+
+
+def test_write_json():
+    """Test _write_json correctly writes contents as JSON."""
+    dummy_data = {
+        'SPORK': ['Illogical'],
+        'PIKARD': ['Engage.', 'Make it so.'],
+    }
+
+    with tempfile.NamedTemporaryFile(mode='w+') as the_file:
+        scrape._write_json(the_file.name, dummy_data)
+        the_file.seek(0)
+        written_json = json.load(the_file)
+        assert written_json == dummy_data
+
+
+def test_write_pickle():
+    """Test _write_pickle correctly writes pickled contents."""
+    dummy_data = {
+        'SPORK': ['Illogical'],
+        'PIKARD': ['Engage.', 'Make it so.'],
+    }
+
+    with tempfile.NamedTemporaryFile(mode='w+b') as the_file:
+        scrape._write_pickle(the_file.name, dummy_data)
+        the_file.seek(0)
+        written_pickle = pickle.load(the_file)
+        assert written_pickle == dummy_data

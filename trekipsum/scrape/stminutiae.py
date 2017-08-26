@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_ASSETS_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'assets')
+DEFAULT_SCRIPT_URL = 'http://www.st-minutiae.com/resources/scripts/{}.txt'
 
 
 class Scraper(object):
@@ -17,6 +18,7 @@ class Scraper(object):
     def __init__(self):
         """Initialize default path to assets on disk."""
         self.assets_path = DEFAULT_ASSETS_PATH
+        self.script_url = DEFAULT_SCRIPT_URL
 
     def extract_dialog(self, script_id):
         """Parse plaintext script, downloading file if needed."""
@@ -31,7 +33,7 @@ class Scraper(object):
 
     def scrape_script(self, script_id, to_file_path):
         """Scrape script from st-minutiae.com."""
-        url = 'http://www.st-minutiae.com/resources/scripts/{}.txt'.format(script_id)
+        url = self.script_url.format(script_id)
         logger.debug('attempting to download script from %s', url)
         response = requests.get(url)
         if response:

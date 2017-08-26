@@ -93,6 +93,8 @@ destroyed, please notify the Script Department.
 	Landfleet LIEUTENANT DORF, a young Hacker, is at the
 	"Ops" station and a SUPERNUMERARY is at "Conn".
 
+END OF ACT ONE
+
 					PIKARD V.O.
 				(continuing)
 			... twelve
@@ -119,7 +121,7 @@ destroyed, please notify the Script Department.
 			twenty
 
 					PIKARD
-			twenty-one
+			twenty- one
 
 
 7    CONTINUED:

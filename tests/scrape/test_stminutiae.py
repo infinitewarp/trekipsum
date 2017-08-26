@@ -1,4 +1,7 @@
 import os
+import tempfile
+
+import six
 
 from trekipsum.scrape import stminutiae
 
@@ -21,6 +24,55 @@ def extract_lines(all_dialog, speaker):
     return [line for line_speaker, line in all_dialog if line_speaker == speaker]
 
 
+@mock.patch('trekipsum.scrape.stminutiae.requests.get')
+def test_scrape_script(mock_get):
+    """Test scrape_script successfully pulls down and writes data."""
+    with open(os.path.join(TEST_ASSETS_PATH, 'tng.txt')) as source_file:
+        dummy_script = source_file.read()
+
+    mock_url = 'http://example.foobar/{}.txt'
+    script_id = 1701
+    expected_called_url = mock_url.format(script_id)
+    mock_get.return_value.text = dummy_script
+
+    with tempfile.NamedTemporaryFile(mode='w+') as out_file:
+        scraper = stminutiae.Scraper()
+        scraper.script_url = mock_url
+        scraper.scrape_script(script_id, out_file.name)
+        mock_get.assert_called_with(expected_called_url)
+
+        out_file.seek(0)
+        written_contents = out_file.read()
+        assert written_contents == dummy_script
+
+
+@mock.patch('trekipsum.scrape.stminutiae.requests.get')
+def test_scrape_script_not_found(mock_get):
+    """Test scrape_script handles 404 not found when scraping a script."""
+    mock_url = 'http://example.foobar/{}.txt'
+    script_id = 1702
+    expected_called_url = mock_url.format(script_id)
+
+    if six.PY3:
+        mock_get.return_value.__bool__.return_value = False
+    else:
+        mock_get.return_value.__nonzero__.return_value = False
+    mock_get.return_value.text = 'This is not the document you are looking for.'
+    mock_get.return_value.url = mock_url.format(script_id)
+    mock_get.return_value.status_code = 404
+    mock_get.return_value.reason = 'not found'
+
+    with tempfile.NamedTemporaryFile(mode='w+') as out_file:
+        scraper = stminutiae.Scraper()
+        scraper.script_url = mock_url
+        scraper.scrape_script(script_id, out_file.name)
+        out_file.seek(0, 2)  # seeks end of the file
+        size = out_file.tell()
+        assert size == 0  # file should be empty
+
+    mock_get.assert_called_with(expected_called_url)
+
+
 def test_parse_script_mock_tng():
     """Test parse_script against dummy TNG-formatted script."""
     scraper = stminutiae.Scraper()
@@ -35,14 +87,14 @@ def test_parse_script_mock_tng():
     assert extract_speakers(all_dialog) == expected_speakers
 
     parsed_dialog = dict((s, extract_lines(all_dialog, s)) for s in expected_speakers)
-    assert len(parsed_dialog['PIKARD']) == 9
+    assert len(parsed_dialog['PIKARD']) == 10
     assert len(parsed_dialog['BROI']) == 2
     assert len(parsed_dialog['DORF']) == 3
     assert len(parsed_dialog['DADA']) == 5
     assert len(parsed_dialog['Z']) == 5
 
-    assert 'one two three four five six seven eight nine ten eleven twelve thirteen. fourteen ' \
-           'fifteen?' in parsed_dialog['PIKARD']
+    assert 'one two three four five six seven eight nine ten eleven ...' in parsed_dialog['PIKARD']
+    assert '... twelve thirteen. fourteen fifteen?' in parsed_dialog['PIKARD']
     assert 'sixteen seventeen' in parsed_dialog['DADA']
     assert 'eighteen' in parsed_dialog['PIKARD']
     assert 'nineteen twenty' in parsed_dialog['BROI']
