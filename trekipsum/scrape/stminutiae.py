@@ -3,6 +3,7 @@ import os
 import re
 
 import requests
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,16 @@ class Scraper(object):
         response = requests.get(url)
         if response:
             with open(to_file_path, mode='w') as f:
-                f.write(response.text)
+                # 103, 131, 227? are known problematic
+                control_chars = list(range(32))
+                control_chars.remove(9)
+                control_chars.remove(10)
+                if six.PY3:
+                    clean_text = response.text.translate(dict.fromkeys(control_chars))
+                else:
+                    control_chars = [chr(c) for c in control_chars]
+                    clean_text = str.translate(response.text, None, ''.join(control_chars))
+                f.write(clean_text)
         else:
             logger.error('could not fetch %s: %s %s',
                          response.url, response.status_code, response.reason)
