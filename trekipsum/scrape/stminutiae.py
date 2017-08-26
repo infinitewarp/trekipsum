@@ -77,6 +77,12 @@ class Extractor(object):
             'JULY 19',
         )
 
+        self.speaker_corrections = {
+            'WES': 'WESLEY',
+            'EE I CHAR': 'EE\'CHAR',
+            'CRUSHER': 'BEVERLY',
+        }
+
     def extract_lines(self):
         """
         Extract lines of dialog.
@@ -104,7 +110,8 @@ class Extractor(object):
             speaker_match = self.speaker_matcher.match(line)
             if speaker_match:
                 text = speaker_match.group(1).upper().strip()
-                self._on_speaker_match(text)
+                if text:
+                    self._on_speaker_match(text)
 
         # special case to handle the very last line of dialog
         if self.__speaker is not None and len(self.__dialog) > 0:
@@ -143,6 +150,9 @@ class Extractor(object):
         Upon finding a speaker, if it's different from the last known speaker, save the dialog
         for that last speaker and start tracking for the new speaker.
         """
+        if text in self.speaker_corrections:
+            text = self.speaker_corrections[text]
+
         if self.__speaker != text:
             if len(self.__dialog) > 0:
                 if self.__speaker is None:

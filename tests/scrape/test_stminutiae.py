@@ -81,7 +81,7 @@ def test_parse_script_mock_tng():
         all_dialog = scraper.extract_dialog('tng')
         assert mock_scrape_script.called is False
 
-    expected_speakers = set(('PIKARD', 'BROI', 'DORF', 'DADA', 'Z'))
+    expected_speakers = set(('PIKARD', 'BROI', 'DORF', 'DADA', 'WESLEY', 'Z'))
 
     assert len(all_dialog) > 0
     assert extract_speakers(all_dialog) == expected_speakers
@@ -89,8 +89,9 @@ def test_parse_script_mock_tng():
     parsed_dialog = dict((s, extract_lines(all_dialog, s)) for s in expected_speakers)
     assert len(parsed_dialog['PIKARD']) == 10
     assert len(parsed_dialog['BROI']) == 2
-    assert len(parsed_dialog['DORF']) == 3
+    assert len(parsed_dialog['DORF']) == 1
     assert len(parsed_dialog['DADA']) == 5
+    assert len(parsed_dialog['WESLEY']) == 2
     assert len(parsed_dialog['Z']) == 5
 
     assert 'one two three four five six seven eight nine ten eleven ...' in parsed_dialog['PIKARD']
@@ -115,9 +116,27 @@ def test_parse_script_mock_tng():
     assert 'forty-two' in parsed_dialog['Z']
     assert 'forty-three... ! forty-four forty-five' in parsed_dialog['PIKARD']
     assert 'forty-six forty-seven' in parsed_dialog['Z']
-    assert 'forty-eight' in parsed_dialog['DORF']
+    assert 'forty-eight' in parsed_dialog['WESLEY']
     assert 'forty-nine' in parsed_dialog['Z']
-    assert 'fifty' in parsed_dialog['DORF']
+    assert 'fifty' in parsed_dialog['WESLEY']
+
+
+def test_parse_script_mock_tng_weird_space():
+    """Test parse_script against dummy TNG-formatted script that has a spacing issue."""
+    scraper = stminutiae.Scraper()
+    scraper.assets_path = TEST_ASSETS_PATH
+    with mock.patch.object(scraper, 'scrape_script') as mock_scrape_script:
+        all_dialog = scraper.extract_dialog('tng2')
+        assert mock_scrape_script.called is False
+
+    expected_speakers = set(['PIKARD'])
+
+    assert len(all_dialog) > 0
+    assert extract_speakers(all_dialog) == expected_speakers
+
+    parsed_dialog = dict((s, extract_lines(all_dialog, s)) for s in expected_speakers)
+    assert len(parsed_dialog['PIKARD']) == 1
+    assert 'Captain\'s log. Blah blah blah.' in parsed_dialog['PIKARD']
 
 
 def test_parse_script_mock_tmp():

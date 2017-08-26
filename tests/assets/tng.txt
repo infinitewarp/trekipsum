@@ -209,7 +209,7 @@ END OF ACT ONE
 				(interrupting)
 			forty-seven
 
-					DORF
+					WES
 			forty-eight
 
 	All have turned toward Dorf, showing relief.
@@ -217,6 +217,6 @@ END OF ACT ONE
 					"Z" (21ST CENTURY)
 			forty-nine
 
-					DORF
+					WESLEY
 				(indicates "Z")
 			fifty
