@@ -57,6 +57,7 @@ def parse_cli_args():
     parser.add_argument('-j', '--json', type=str, help='path to write json file')
     parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
     parser.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
+    parser.add_argument('--speakers', type=str, nargs='+', help='limit output to these speakers')
 
     types_group = parser.add_argument_group('include script sources')
     types_group.add_argument('--all', help='all', action='store_true')
@@ -86,10 +87,10 @@ def main_cli():
         all_dialog += parse_ds9()
 
     if args.raw:
-        _write_raw(args.raw, all_dialog)
+        _write_raw(args.raw, all_dialog, args.speakers)
 
     if args.json or args.pickle:
-        dialog_dict = _dictify_dialog(all_dialog)
+        dialog_dict = _dictify_dialog(all_dialog, args.speakers)
 
     if args.json:
         _write_json(args.json, dialog_dict)
@@ -98,18 +99,20 @@ def main_cli():
         _write_pickle(args.pickle, dialog_dict)
 
 
-def _write_raw(raw_path, all_dialog, format='{speaker}:\n{line}\n\n'):
+def _write_raw(raw_path, all_dialog, speakers=None, format='{speaker}:\n{line}\n\n'):
     raw_path = os.path.abspath(raw_path)
     logger.info('dumping raw to %s', raw_path)
     with open(raw_path, 'w') as raw_file:
         for speaker, line in all_dialog:
-            raw_file.write(format.format(speaker=speaker, line=line))
+            if not speakers or speaker in speakers:
+                raw_file.write(format.format(speaker=speaker, line=line))
 
 
-def _dictify_dialog(all_dialog):
+def _dictify_dialog(all_dialog, speakers=None):
     dialog_dictset = magicdictlist()
     for speaker, line in all_dialog:
-        dialog_dictset[speaker].append(line)
+        if not speakers or speaker in speakers:
+            dialog_dictset[speaker].append(line)
     return dialog_dictset.dedupe()
 
 
