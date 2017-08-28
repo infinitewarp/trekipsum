@@ -29,7 +29,7 @@ class RandomDialogChooser(object):
         self.speaker = speaker.upper() if speaker else None
         self._all_dialog = None
         self._dialog_count = 0
-        self._pickle_path = os.path.join(os.path.dirname(os.path.dirname(__name__)),
+        self._pickle_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                          'assets', 'all_dialog.pickle')
 
     @property

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_ASSETS_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'assets')
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets')
 DEFAULT_SCRIPT_URL = 'http://www.st-minutiae.com/resources/scripts/{}.txt'
 
 

@@ -127,4 +127,4 @@ def _write_pickle(pickle_path, dialog_dict):
     pickle_path = os.path.abspath(pickle_path)
     logger.info('dumping pickle to %s', pickle_path)
     with open(pickle_path, 'wb') as pickle_file:
-        pickle.dump(dialog_dict, pickle_file)
+        pickle.dump(dict(dialog_dict), pickle_file, protocol=2)  # 2 is py27-compatible
