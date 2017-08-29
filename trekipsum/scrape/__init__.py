@@ -1,8 +1,12 @@
 import argparse
+import contextlib
 import json
 import logging
 import os
 import pickle
+import sqlite3
+
+import six
 
 from .stminutiae import Scraper as STMScraper
 from .utils import magicdictlist
@@ -57,6 +61,7 @@ def parse_cli_args():
     parser.add_argument('-j', '--json', type=str, help='path to write json file')
     parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
     parser.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
+    parser.add_argument('-s', '--sqlite', type=str, help='path to write sqlite db')
     parser.add_argument('--speakers', type=str, nargs='+', help='limit output to these speakers')
 
     types_group = parser.add_argument_group('include script sources')
@@ -89,7 +94,7 @@ def main_cli():
     if args.raw:
         _write_raw(args.raw, all_dialog, args.speakers)
 
-    if args.json or args.pickle:
+    if args.json or args.pickle or args.sqlite:
         dialog_dict = _dictify_dialog(all_dialog, args.speakers)
 
     if args.json:
@@ -97,6 +102,9 @@ def main_cli():
 
     if args.pickle:
         _write_pickle(args.pickle, dialog_dict)
+
+    if args.sqlite:
+        _write_sqlite(args.sqlite, dialog_dict)
 
 
 def _write_raw(raw_path, all_dialog, speakers=None, format='{speaker}:\n{line}\n\n'):
@@ -128,3 +136,26 @@ def _write_pickle(pickle_path, dialog_dict):
     logger.info('dumping pickle to %s', pickle_path)
     with open(pickle_path, 'wb') as pickle_file:
         pickle.dump(dict(dialog_dict), pickle_file, protocol=2)  # 2 is py27-compatible
+
+
+def _write_sqlite(sqlite_path, dialog_dict):
+    sqlite_path = os.path.abspath(sqlite_path)
+    logger.info('dumping sqlite to %s', sqlite_path)
+
+    drop_sql = 'DROP TABLE IF EXISTS dialog'
+    create_sql = 'CREATE TABLE IF NOT EXISTS dialog (' \
+                 '  dialog_id INTEGER PRIMARY KEY AUTOINCREMENT,' \
+                 '  speaker VARCHAR,' \
+                 '  line VARCHAR' \
+                 ')'
+    query = 'INSERT INTO dialog (speaker, line) VALUES (?,?)'
+    index_sql = 'CREATE INDEX dialog_speaker_idx ON dialog(speaker)'
+
+    with contextlib.closing(sqlite3.connect(sqlite_path)) as conn, conn:
+        conn.execute(drop_sql)
+        conn.execute(create_sql)
+        for speaker, lines in six.iteritems(dialog_dict):
+            for line in lines:
+                args = (speaker, line)
+                conn.execute(query, args)
+        conn.execute(index_sql)
