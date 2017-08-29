@@ -1,4 +1,4 @@
-from trekipsum.scrape.utils import magicdictlist
+from trekipsum.scrape.utils import magicdictlist, retriable_session
 
 
 def test_magicdictlist_getitem():
@@ -30,3 +30,16 @@ def test_magicdictlist_dedupe():
     assert len(d2['key2']) == 1
     assert set(d2['key1']) == set(['1 hello', '1 world'])
     assert d2['key2'] == ['2 hello']
+
+
+def test_retriable_session():
+    """Test retriable_session returns a well-constructed requests.Session."""
+    total = 5
+    backoff_factor = 0.5
+    session = retriable_session(total, backoff_factor)
+    assert len(session.adapters) == 2
+    assert 'https://' in session.adapters
+    assert 'http://' in session.adapters
+    assert session.adapters['https://'] == session.adapters['http://']
+    assert session.adapters['https://'].max_retries.total == total
+    assert session.adapters['https://'].max_retries.backoff_factor == backoff_factor

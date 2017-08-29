@@ -24,8 +24,8 @@ def extract_lines(all_dialog, speaker):
     return [line for line_speaker, line in all_dialog if line_speaker == speaker]
 
 
-@mock.patch('trekipsum.scrape.stminutiae.requests.get')
-def test_scrape_script(mock_get):
+@mock.patch('trekipsum.scrape.stminutiae.retriable_session')
+def test_scrape_script(mock_retriable_session):
     """Test scrape_script successfully pulls down and writes data."""
     with open(os.path.join(TEST_ASSETS_PATH, 'tng.txt')) as source_file:
         dummy_script = source_file.read()
@@ -33,26 +33,28 @@ def test_scrape_script(mock_get):
     mock_url = 'http://example.foobar/{}.txt'
     script_id = 1701
     expected_called_url = mock_url.format(script_id)
-    mock_get.return_value.text = dummy_script
+    mock_retriable_session.return_value.get.return_value.text = dummy_script
 
     with tempfile.NamedTemporaryFile(mode='w+') as out_file:
         scraper = stminutiae.Scraper()
         scraper.script_url = mock_url
         scraper.scrape_script(script_id, out_file.name)
-        mock_get.assert_called_with(expected_called_url)
+        mock_retriable_session.assert_called_with()
+        mock_retriable_session.return_value.get.assert_called_with(expected_called_url, timeout=1)
 
         out_file.seek(0)
         written_contents = out_file.read()
         assert written_contents == dummy_script
 
 
-@mock.patch('trekipsum.scrape.stminutiae.requests.get')
-def test_scrape_script_not_found(mock_get):
+@mock.patch('trekipsum.scrape.stminutiae.retriable_session')
+def test_scrape_script_not_found(mock_retriable_session):
     """Test scrape_script handles 404 not found when scraping a script."""
     mock_url = 'http://example.foobar/{}.txt'
     script_id = 1702
     expected_called_url = mock_url.format(script_id)
 
+    mock_get = mock_retriable_session.return_value.get
     if six.PY3:
         mock_get.return_value.__bool__.return_value = False
     else:
@@ -70,7 +72,7 @@ def test_scrape_script_not_found(mock_get):
         size = out_file.tell()
         assert size == 0  # file should be empty
 
-    mock_get.assert_called_with(expected_called_url)
+    mock_get.assert_called_with(expected_called_url, timeout=1)
 
 
 def test_parse_script_mock_tng():

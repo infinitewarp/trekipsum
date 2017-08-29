@@ -2,8 +2,9 @@ import logging
 import os
 import re
 
-import requests
 import six
+
+from trekipsum.scrape.utils import retriable_session
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class Scraper(object):
         """Initialize default path to assets on disk."""
         self.assets_path = DEFAULT_ASSETS_PATH
         self.script_url = DEFAULT_SCRIPT_URL
+        self.session = retriable_session()
 
     def extract_dialog(self, script_id):
         """Parse plaintext script, downloading file if needed."""
@@ -36,7 +38,7 @@ class Scraper(object):
         """Scrape script from st-minutiae.com."""
         url = self.script_url.format(script_id)
         logger.debug('attempting to download script from %s', url)
-        response = requests.get(url)
+        response = self.session.get(url, timeout=1.0)
         if response:
             with open(to_file_path, mode='w') as f:
                 # 103, 131, 227? are known problematic
