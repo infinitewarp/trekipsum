@@ -10,7 +10,7 @@ import sys
 import six
 import tqdm
 
-from .. import SQLITE_ASSETS_PATH
+from ..backends.sqlite import DEFAULT_SQLITE_PATH
 from .stminutiae import Scraper as STMScraper
 from .utils import magicdictlist
 
@@ -187,7 +187,7 @@ def _write_pickle(pickle_path, dialog_dict):
 
 
 def _write_assets(dialog_dict):
-    sqlite_path = SQLITE_ASSETS_PATH
+    sqlite_path = DEFAULT_SQLITE_PATH
     if os.path.exists(sqlite_path):
         os.remove(sqlite_path)
     _write_sqlite(sqlite_path, dialog_dict)
