@@ -7,7 +7,6 @@ import pickle
 import sqlite3
 import sys
 
-import six
 import tqdm
 
 from ..backends.sqlite import DEFAULT_SQLITE_PATH
@@ -136,11 +135,11 @@ def main_cli():
         logger.info('reading ds9 scripts')
         all_dialog += parse_ds9(args.progress)
 
-    if args.json or args.pickle or args.sqlite or not args.no_assets:
+    if args.json or args.pickle or args.sqlite:
         dialog_dict = _dictify_dialog(all_dialog, args.speakers)
 
     if not args.no_assets:
-        _write_assets(dialog_dict)
+        _write_assets(all_dialog)
 
     if args.raw:
         _write_raw(args.raw, all_dialog, args.speakers)
@@ -186,14 +185,14 @@ def _write_pickle(pickle_path, dialog_dict):
         pickle.dump(dict(dialog_dict), pickle_file, protocol=2)  # 2 is py27-compatible
 
 
-def _write_assets(dialog_dict):
+def _write_assets(dialog_list):
     sqlite_path = DEFAULT_SQLITE_PATH
     if os.path.exists(sqlite_path):
         os.remove(sqlite_path)
-    _write_sqlite(sqlite_path, dialog_dict)
+    _write_sqlite(sqlite_path, dialog_list)
 
 
-def _write_sqlite(sqlite_path, dialog_dict):
+def _write_sqlite(sqlite_path, dialog_list):
     sqlite_path = os.path.abspath(sqlite_path)
     logger.info('dumping sqlite to %s', sqlite_path)
 
@@ -209,8 +208,8 @@ def _write_sqlite(sqlite_path, dialog_dict):
     with contextlib.closing(sqlite3.connect(sqlite_path)) as conn, conn:
         conn.execute(drop_sql)
         conn.execute(create_sql)
-        for speaker, lines in six.iteritems(dialog_dict):
-            for line in lines:
-                args = (speaker, line)
-                conn.execute(query, args)
+        for speaker, line in dialog_list:
+            # for line in lines:
+            args = (speaker, line)
+            conn.execute(query, args)
         conn.execute(index_sql)
