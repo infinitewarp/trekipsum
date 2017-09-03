@@ -135,3 +135,33 @@ def test_write_pickle():
         the_file.seek(0)
         written_pickle = pickle.load(the_file)
         assert written_pickle == dummy_data
+
+
+@mock.patch('trekipsum.scrape.logging')
+@mock.patch('trekipsum.scrape.logger')
+def test_configure_logging_0(mock_logger, mock_logging):
+    """Test configure_logging sets logging for verbosity 0."""
+    scrape.configure_logging(0)
+    mock_logger.setLevel.assert_called_with(mock_logging.WARNING)
+    mock_logging.basicConfig.assert_called_with(level=mock_logging.WARNING,
+                                                format=scrape.LOG_FORMAT_BASIC)
+
+
+@mock.patch('trekipsum.scrape.logging')
+@mock.patch('trekipsum.scrape.logger')
+def test_configure_logging_1(mock_logger, mock_logging):
+    """Test configure_logging sets logging for verbosity 1."""
+    scrape.configure_logging(1)
+    mock_logger.setLevel.assert_called_with(mock_logging.INFO)
+    mock_logging.basicConfig.assert_called_with(level=mock_logging.INFO,
+                                                format=scrape.LOG_FORMAT_BASIC)
+
+
+@mock.patch('trekipsum.scrape.logging')
+@mock.patch('trekipsum.scrape.logger')
+def test_configure_logging_2(mock_logger, mock_logging):
+    """Test configure_logging sets logging for verbosity 2."""
+    scrape.configure_logging(2)
+    mock_logger.setLevel.assert_called_with(mock_logging.DEBUG)
+    mock_logging.basicConfig.assert_called_with(level=mock_logging.DEBUG,
+                                                format=scrape.LOG_FORMAT_NOISY)

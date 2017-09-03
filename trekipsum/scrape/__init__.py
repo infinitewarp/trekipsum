@@ -15,6 +15,9 @@ from .utils import magicdictlist
 
 logger = logging.getLogger(__name__)
 
+LOG_FORMAT_BASIC = '%(levelname)s: %(message)s'
+LOG_FORMAT_NOISY = '%(asctime)s %(levelname)s: %(message)s'
+
 
 def parse_movies():
     """Parse movies scripts."""
@@ -76,15 +79,42 @@ def parse_cli_args():
     dump_group.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
     dump_group.add_argument('-s', '--sqlite', type=str, help='path to write sqlite db')
 
+    additional_group = parser.add_argument_group('additional arguments')
+    additional_group.add_argument('-v', '--verbose', action='count', default=0,
+                                  help='verbose mode; multiple -v options increase the verbosity')
+
     return parser.parse_args()
+
+
+def configure_logging(verbosity):
+    """
+    Configure logging based on requested verbosity level.
+
+    0 displays warning messages
+    1 displays info messages
+    2 display debug messages and includes timestamp
+    """
+    if verbosity == 0:
+        log_level = logging.WARNING
+    elif verbosity == 1:
+        log_level = logging.INFO
+    elif verbosity > 1:
+        log_level = logging.DEBUG
+
+    if verbosity <= 1:
+        log_format = LOG_FORMAT_BASIC
+    elif verbosity > 1:
+        log_format = LOG_FORMAT_NOISY
+
+    logging.basicConfig(level=log_level, format=log_format)
+    logger.setLevel(log_level)
 
 
 def main_cli():
     """Execute module as CLI program."""
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
-    logger.setLevel(logging.DEBUG)
-
     args = parse_cli_args()
+
+    configure_logging(args.verbose)
 
     if not any((not args.no_assets, args.json, args.pickle, args.sqlite, args.raw)):
         logger.error('Nothing to do; no outputs specified.')
