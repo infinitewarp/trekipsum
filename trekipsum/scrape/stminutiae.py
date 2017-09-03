@@ -160,6 +160,9 @@ class Extractor(object):
         Upon finding a speaker, if it's different from the last known speaker, save the dialog
         for that last speaker and start tracking for the new speaker.
         """
+        if text[-1] == '.' and '.' not in text[:-1]:
+            text = text[:-1]  # strip trailing dot
+
         if text in self.speaker_corrections:
             text = self.speaker_corrections[text]
 
