@@ -15,6 +15,9 @@ def parse_cli_args():
     parser.add_argument('--no-attribute', help='hide speaker attribution', action='store_true')
     parser.add_argument('--count', type=int, default=1, help='lines of dialog to output')
     parser.add_argument('--debug', help='enable debug logging', action='store_true')
+
+    advanced_group = parser.add_argument_group('experimental options')
+    advanced_group.add_argument('--sqlite', action='store_true', help='use sqlite processor')
     return parser.parse_args()
 
 
@@ -34,7 +37,10 @@ def main_cli():
     loglevel = logging.DEBUG if args.debug else logging.CRITICAL
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s')
     logger.setLevel(loglevel)
-    chooser = backends.PickleRandomChooser(speaker=args.speaker)
+    if args.sqlite:
+        chooser = backends.SqliteRandomChooser(speaker=args.speaker)
+    else:
+        chooser = backends.PickleRandomChooser(speaker=args.speaker)
     for _ in range(args.count):
         speaker, line = chooser.random_dialog()
         print_dialog(line, speaker, not args.no_attribute)
