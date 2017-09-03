@@ -96,8 +96,9 @@ def test_parse_script_mock_tng():
     assert len(parsed_dialog['WESLEY']) == 2
     assert len(parsed_dialog['Z']) == 5
 
-    assert 'one two three four five six seven eight nine ten eleven ...' in parsed_dialog['PIKARD']
-    assert '... twelve thirteen. fourteen fifteen?' in parsed_dialog['PIKARD']
+    assert 'one two three four five... six seven eight nine ten eleven...'\
+           in parsed_dialog['PIKARD']
+    assert '...twelve thirteen. fourteen fifteen?' in parsed_dialog['PIKARD']
     assert 'sixteen seventeen' in parsed_dialog['DADA']
     assert 'eighteen' in parsed_dialog['PIKARD']
     assert 'nineteen twenty' in parsed_dialog['BROI']
@@ -105,12 +106,12 @@ def test_parse_script_mock_tng():
     assert 'twenty-two' in parsed_dialog['DADA']
     assert 'twenty-three' in parsed_dialog['PIKARD']
     assert 'twenty-four.' in parsed_dialog['DADA']
-    assert 'twenty-five ...' in parsed_dialog['PIKARD']
-    assert 'twenty-six twenty-seven ...' in parsed_dialog['DADA']
-    assert 'twenty-eight ...' in parsed_dialog['PIKARD']
-    assert '... twenty-nine thirty ...' in parsed_dialog['DADA']
-    assert 'thirty-one thirty-two ...' in parsed_dialog['BROI']
-    assert 'thirty-three thirty-four ...' in parsed_dialog['DORF']
+    assert 'twenty-five...' in parsed_dialog['PIKARD']
+    assert 'twenty-six twenty-seven...' in parsed_dialog['DADA']
+    assert 'twenty-eight...' in parsed_dialog['PIKARD']
+    assert '...twenty-nine thirty...' in parsed_dialog['DADA']
+    assert 'thirty-one thirty-two...' in parsed_dialog['BROI']
+    assert 'thirty-three thirty-four...' in parsed_dialog['DORF']
     assert 'thirty-five' in parsed_dialog['Z']
     assert 'thirty-six thirty-seven' in parsed_dialog['PIKARD']
     assert 'thirty-eight thirty-nine forty' in parsed_dialog['Z']
@@ -162,6 +163,6 @@ def test_parse_script_mock_tmp():
 
     assert 'one two three four five six...' in parsed_dialog['FLINGON CAPTAIN']
     assert 'seven' in parsed_dialog['LIEUTENANT']
-    assert '... eight nine ten eleven.. twelve.' in parsed_dialog['FLINGON CAPTAIN']
+    assert '...eight nine ten... eleven... twelve.' in parsed_dialog['FLINGON CAPTAIN']
     assert 'thirteen' in parsed_dialog['BRANCH']
     assert 'fourteen' in parsed_dialog['LIEUTENANT']

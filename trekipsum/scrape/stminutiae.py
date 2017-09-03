@@ -131,12 +131,20 @@ class Extractor(object):
 
     def _on_dialog_match(self, text):
         """Clean up and append the text to the running dialog."""
-        if len(self.__dialog) > 0:
-            if self.__dialog.endswith('...'):
-                self.__dialog = self.__dialog.rstrip('. ')
-            if text.startswith('...'):
-                text = text.lstrip('. ')
+        if text.endswith('..'):
+            # clean up lines ending with ellipses
+            text = '{}...'.format(text.rstrip('. '))
+
+        if text.startswith('..'):
+            # clean up lines starting with ellipses
+            text = text.lstrip('. ')
+            if len(self.__dialog) == 0:
+                # only include opening ellipsis if this is the start of dialog
+                text = '...{}'.format(text)
+
+        # Join with existing dialog.
         self.__dialog = '{} {}'.format(self.__dialog, text).strip()
+
         if '- ' in self.__dialog:
             # fix some weird hyphenation spacing issues
             self.__dialog, _ = re.subn(
