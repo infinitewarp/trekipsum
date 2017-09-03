@@ -11,6 +11,10 @@ import six
 logger = logging.getLogger(__name__)
 
 
+SQLITE_ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'assets', 'dialog.sqlite')
+
+
 class SpeakerNotFoundException(Exception):
     """Exception for when trying to access dialog for a speaker who has none."""
 

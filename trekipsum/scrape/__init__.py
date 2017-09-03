@@ -5,9 +5,11 @@ import logging
 import os
 import pickle
 import sqlite3
+import sys
 
 import six
 
+from .. import SQLITE_ASSETS_PATH
 from .stminutiae import Scraper as STMScraper
 from .utils import magicdictlist
 
@@ -58,10 +60,8 @@ def parse_voyager():
 def parse_cli_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='Script dialog scraper')
-    parser.add_argument('-j', '--json', type=str, help='path to write json file')
-    parser.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
-    parser.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
-    parser.add_argument('-s', '--sqlite', type=str, help='path to write sqlite db')
+    parser.add_argument('--no-assets', help='do not write trekipsum module assets',
+                        action='store_true')
     parser.add_argument('--speakers', type=str, nargs='+', help='limit output to these speakers')
 
     types_group = parser.add_argument_group('include script sources')
@@ -69,6 +69,12 @@ def parse_cli_args():
     types_group.add_argument('--movies', help='movies', action='store_true')
     types_group.add_argument('--tng', help='the next generation', action='store_true')
     types_group.add_argument('--ds9', help='deep space nine', action='store_true')
+
+    dump_group = parser.add_argument_group('additional custom output')
+    dump_group.add_argument('-j', '--json', type=str, help='path to write json file')
+    dump_group.add_argument('-p', '--pickle', type=str, help='path to write pickle file')
+    dump_group.add_argument('-r', '--raw', type=str, help='path to write raw, unoptimized scripts')
+    dump_group.add_argument('-s', '--sqlite', type=str, help='path to write sqlite db')
 
     return parser.parse_args()
 
@@ -79,6 +85,10 @@ def main_cli():
     logger.setLevel(logging.DEBUG)
 
     args = parse_cli_args()
+
+    if not any((not args.no_assets, args.json, args.pickle, args.sqlite, args.raw)):
+        logger.error('Nothing to do; no outputs specified.')
+        sys.exit(1)
 
     all_dialog = []
     if args.movies or args.all:
@@ -91,11 +101,14 @@ def main_cli():
         logger.info('reading ds9 scripts')
         all_dialog += parse_ds9()
 
+    if args.json or args.pickle or args.sqlite or not args.no_assets:
+        dialog_dict = _dictify_dialog(all_dialog, args.speakers)
+
+    if not args.no_assets:
+        _write_assets(dialog_dict)
+
     if args.raw:
         _write_raw(args.raw, all_dialog, args.speakers)
-
-    if args.json or args.pickle or args.sqlite:
-        dialog_dict = _dictify_dialog(all_dialog, args.speakers)
 
     if args.json:
         _write_json(args.json, dialog_dict)
@@ -136,6 +149,13 @@ def _write_pickle(pickle_path, dialog_dict):
     logger.info('dumping pickle to %s', pickle_path)
     with open(pickle_path, 'wb') as pickle_file:
         pickle.dump(dict(dialog_dict), pickle_file, protocol=2)  # 2 is py27-compatible
+
+
+def _write_assets(dialog_dict):
+    sqlite_path = SQLITE_ASSETS_PATH
+    if os.path.exists(sqlite_path):
+        os.remove(sqlite_path)
+    _write_sqlite(sqlite_path, dialog_dict)
 
 
 def _write_sqlite(sqlite_path, dialog_dict):
