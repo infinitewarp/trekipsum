@@ -52,8 +52,8 @@ class Scraper(object):
                     clean_text = str.translate(response.text, None, ''.join(control_chars))
                 f.write(clean_text)
         else:
-            logger.error('could not fetch %s: %s %s',
-                         response.url, response.status_code, response.reason)
+            logger.warning('could not fetch %s: %s %s',
+                           response.url, response.status_code, response.reason)
 
 
 class Extractor(object):
@@ -166,7 +166,7 @@ class Extractor(object):
         if self.__speaker != text:
             if len(self.__dialog) > 0:
                 if self.__speaker is None:
-                    logger.error('discarding dialog with no speaker: %s', self.__dialog)
+                    logger.debug('discarding dialog with no speaker: %s', self.__dialog)
                     self._reset_dialog()
                 else:
                     self.__dialog = self.__dialog.replace('... ...', '')
