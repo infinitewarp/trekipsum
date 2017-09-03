@@ -83,7 +83,7 @@ def test_parse_script_mock_tng():
         all_dialog = scraper.extract_dialog('tng')
         assert mock_scrape_script.called is False
 
-    expected_speakers = set(('PIKARD', 'BROI', 'DORF', 'DADA', 'WESLEY', 'Z'))
+    expected_speakers = {'PIKARD', 'BROI', 'DORF', 'DADA', 'WESLEY', 'WESLEY/Z', 'Z'}
 
     assert len(all_dialog) > 0
     assert extract_speakers(all_dialog) == expected_speakers
@@ -94,6 +94,7 @@ def test_parse_script_mock_tng():
     assert len(parsed_dialog['DORF']) == 1
     assert len(parsed_dialog['DADA']) == 5
     assert len(parsed_dialog['WESLEY']) == 2
+    assert len(parsed_dialog['WESLEY/Z']) == 1
     assert len(parsed_dialog['Z']) == 5
 
     assert 'one two three four five... six seven eight nine ten eleven...'\
@@ -122,6 +123,7 @@ def test_parse_script_mock_tng():
     assert 'forty-eight' in parsed_dialog['WESLEY']
     assert 'forty-nine' in parsed_dialog['Z']
     assert 'fifty' in parsed_dialog['WESLEY']
+    assert 'fifty-one' in parsed_dialog['WESLEY/Z']
 
 
 def test_parse_script_mock_tng_weird_space():

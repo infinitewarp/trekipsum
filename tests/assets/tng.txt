@@ -220,3 +220,6 @@ END OF ACT ONE
 					WESLEY
 				(indicates "Z")
 			fifty
+
+					Z AND WESLEY
+			fifty-one

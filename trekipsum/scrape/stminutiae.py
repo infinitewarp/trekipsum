@@ -163,6 +163,14 @@ class Extractor(object):
         if text[-1] == '.' and '.' not in text[:-1]:
             text = text[:-1]  # strip trailing dot
 
+        if ' AND ' in text:
+            text = text.replace(' AND ', '/')
+        if ' & ' in text:
+            text = text.replace(' & ', '/')
+        if '/' in text:
+            speakers = text.split('/')
+            text = '/'.join(sorted(text.split('/')))
+
         if text in self.speaker_corrections:
             text = self.speaker_corrections[text]
 
