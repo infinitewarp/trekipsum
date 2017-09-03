@@ -172,7 +172,6 @@ class Extractor(object):
                     logger.debug('discarding dialog with no speaker: %s', self.__dialog)
                     self._reset_dialog()
                 else:
-                    self.__dialog = self.__dialog.replace('... ...', '')
                     self._append_line()
             if text not in self.blacklisted_speakers:
                 self.__speaker = text
