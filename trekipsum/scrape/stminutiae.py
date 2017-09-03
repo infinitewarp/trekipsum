@@ -80,9 +80,13 @@ class Extractor(object):
         )
 
         self.speaker_corrections = {
-            'WES': 'WESLEY',
-            'EE I CHAR': 'EE\'CHAR',
+            '0\'BRIEN': 'O\'BRIEN',
             'CRUSHER': 'BEVERLY',
+            'EE I CHAR': 'EE\'CHAR',
+            'ENSIGN RO': 'RO',
+            'LA FORGE': 'GEORDI',
+            'SCOTT': 'SCOTTY',
+            'WES': 'WESLEY',
         }
 
     def extract_lines(self):
@@ -168,10 +172,11 @@ class Extractor(object):
         if ' & ' in text:
             text = text.replace(' & ', '/')
         if '/' in text:
-            speakers = text.split('/')
-            text = '/'.join(sorted(text.split('/')))
-
-        if text in self.speaker_corrections:
+            speakers = map(lambda x:
+                           self.speaker_corrections[x] if x in self.speaker_corrections else x,
+                           text.split('/'))
+            text = '/'.join(sorted(speakers))
+        elif text in self.speaker_corrections:
             text = self.speaker_corrections[text]
 
         if self.__speaker != text:
