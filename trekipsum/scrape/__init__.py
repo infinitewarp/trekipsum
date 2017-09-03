@@ -8,6 +8,7 @@ import sqlite3
 import sys
 
 import six
+import tqdm
 
 from .. import SQLITE_ASSETS_PATH
 from .stminutiae import Scraper as STMScraper
@@ -19,7 +20,7 @@ LOG_FORMAT_BASIC = '%(levelname)s: %(message)s'
 LOG_FORMAT_NOISY = '%(asctime)s %(levelname)s: %(message)s'
 
 
-def parse_movies():
+def parse_movies(progress=False):
     """Parse movies scripts."""
     ids = [
         'tmp', 'twok', 'tsfs', 'tvh', 'tff', 'tuc', 'gens',
@@ -28,27 +29,30 @@ def parse_movies():
     ]
     parsed_scripts = []
     scraper = STMScraper()
-    for script_id in ids:
+    iterator = tqdm.tqdm(ids, 'Processing movie scripts') if progress else ids
+    for script_id in iterator:
         parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
 
-def parse_tng():
+def parse_tng(progress=False):
     """Parse TNG scripts."""
     parsed_scripts = []
     scraper = STMScraper()
-    for script_id in range(102, 277 + 1):
+    ids = tuple(range(102, 277 + 1))
+    iterator = tqdm.tqdm(ids, 'Processing TNG scripts') if progress else ids
+    for script_id in iterator:
         parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
 
-def parse_ds9():
+def parse_ds9(progress=False):
     """Parse DS9 scripts."""
     parsed_scripts = []
     scraper = STMScraper()
-    for script_id in range(402, 472 + 1):
-        parsed_scripts += scraper.extract_dialog(script_id)
-    for script_id in range(474, 575 + 1):
+    ids = tuple(range(402, 472 + 1)) + tuple(range(474, 575 + 1))
+    iterator = tqdm.tqdm(ids, 'Processing DS9 scripts') if progress else ids
+    for script_id in iterator:
         parsed_scripts += scraper.extract_dialog(script_id)
     return parsed_scripts
 
@@ -80,6 +84,7 @@ def parse_cli_args():
     dump_group.add_argument('-s', '--sqlite', type=str, help='path to write sqlite db')
 
     additional_group = parser.add_argument_group('additional arguments')
+    additional_group.add_argument('--progress', action='store_true', help='show progress bars')
     additional_group.add_argument('-v', '--verbose', action='count', default=0,
                                   help='verbose mode; multiple -v options increase the verbosity')
 
@@ -123,13 +128,13 @@ def main_cli():
     all_dialog = []
     if args.movies or args.all:
         logger.info('reading movie scripts')
-        all_dialog += parse_movies()
+        all_dialog += parse_movies(args.progress)
     if args.tng or args.all:
         logger.info('reading tng scripts')
-        all_dialog += parse_tng()
+        all_dialog += parse_tng(args.progress)
     if args.ds9 or args.all:
         logger.info('reading ds9 scripts')
-        all_dialog += parse_ds9()
+        all_dialog += parse_ds9(args.progress)
 
     if args.json or args.pickle or args.sqlite or not args.no_assets:
         dialog_dict = _dictify_dialog(all_dialog, args.speakers)
