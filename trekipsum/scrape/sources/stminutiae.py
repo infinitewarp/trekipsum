@@ -1,93 +1,84 @@
 import logging
-import os
 import re
+from os import path
 
 import six
 
-from ..utils import retriable_session
+from .scraper import AbstractScraper
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_ASSETS_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets')
+DEFAULT_ASSETS_PATH = path.join(
+    path.dirname(path.dirname(path.abspath(__file__))),
+    'assets', 'st-minutiae.com')
 DEFAULT_SCRIPT_URL = 'http://www.st-minutiae.com/resources/scripts/{}.txt'
 
 
-class Scraper(object):
+class Scraper(AbstractScraper):
     """Scrape and parse scripts from st-minutiae.com."""
 
     def __init__(self):
         """Initialize default path to assets on disk."""
+        super(Scraper, self).__init__()
+
         self.assets_path = DEFAULT_ASSETS_PATH
         self.script_url = DEFAULT_SCRIPT_URL
-        self.session = retriable_session()
 
-    def extract_dialog(self, script_id):
-        """Parse plaintext script, downloading file if needed."""
-        file_path = os.path.join(self.assets_path, '{}.txt'.format(script_id))
-        if not os.path.isfile(file_path):
-            self.scrape_script(script_id, file_path)
-        if os.path.isfile(file_path):
-            with open(file_path) as f:
-                logger.debug('extracting dialog from %s', file_path)
-                extractor = Extractor(f)
-                return extractor.extract_lines()
+        # control_chars to be stripped from text.
+        # 103, 131, 227 are known to be problematic.
+        self._control_chars = list(range(32))
+        self._control_chars.remove(9)
+        self._control_chars.remove(10)
+        if six.PY2:
+            # because PY2's `translate` behaves differently
+            self._control_chars = [chr(c) for c in self._control_chars]
 
-    def scrape_script(self, script_id, to_file_path):
-        """Scrape script from st-minutiae.com."""
-        url = self.script_url.format(script_id)
-        logger.debug('attempting to download script from %s', url)
-        response = self.session.get(url, timeout=1.0)
-        if response:
-            with open(to_file_path, mode='w') as f:
-                # 103, 131, 227? are known problematic
-                control_chars = list(range(32))
-                control_chars.remove(9)
-                control_chars.remove(10)
-                if six.PY3:
-                    clean_text = response.text.translate(dict.fromkeys(control_chars))
-                else:
-                    control_chars = [chr(c) for c in control_chars]
-                    clean_text = str.translate(response.text, None, ''.join(control_chars))
-                f.write(clean_text)
-        else:
-            logger.warning('could not fetch %s: %s %s',
-                           response.url, response.status_code, response.reason)
+    def _clean_response_text(self, text):
+        if six.PY2:
+            return str.translate(text, None, ''.join(self._control_chars))
+        return text.translate(dict.fromkeys(self._control_chars))
+
+    def _extract_from_file(self, f):
+        extractor = Extractor(f)
+        return extractor.extract_lines()
+
+    def _path_for_script_id(self, script_id):
+        return path.join(self.assets_path, '{}.txt'.format(script_id))
 
 
 class Extractor(object):
     """Parse and extract lines of dialog from a script."""
 
+    # https://regex101.com/r/WBYM0F/1
+    speaker_matcher = re.compile(r'^(?:\t{5}|\ {43})\"?(?!ACT)((?:[a-zA-Z0-9#\-/&]|\.[\ \w]|\.(?=\')|\ (?!V\.O\.|\(|COM\ )|\'(?!S(?![\w])))+)\.?.*$')  # noqa
+    dialog_matcher = re.compile(r'^(?:\t{3}|\t{6}|\ {29}|\ {30})([^\t\ ].+)$')
+    break_matcher = re.compile(r'^\s*END OF ')
+
+    speaker_corrections = {
+        '0\'BRIEN': 'O\'BRIEN',
+        'CRUSHER': 'BEVERLY',
+        'EE I CHAR': 'EE\'CHAR',
+        'ENSIGN RO': 'RO',
+        'LA FORGE': 'GEORDI',
+        'SCOTT': 'SCOTTY',
+        'WES': 'WESLEY',
+    }
+
+    blacklisted_speakers = (
+        'STORY BY',
+        'SHOOTING SCRIPT',
+        'JULY 19',
+    )
+
     def __init__(self, script):
         """
-        Initialize regexes for parsing scripts.
+        Initialize Extractor with provided script.
 
         Args:
             script (iterable): strings for each line of a script file
         """
         self.script = script
-
-        # https://regex101.com/r/WBYM0F/1
-        self.speaker_matcher = re.compile(r'^(?:\t{5}|\ {43})\"?(?!ACT)((?:[a-zA-Z0-9#\-/&]|\.[\ \w]|\.(?=\')|\ (?!V\.O\.|\(|COM\ )|\'(?!S(?![\w])))+)\.?.*$')  # noqa
-        self.dialog_matcher = re.compile(r'^(?:\t{3}|\t{6}|\ {29}|\ {30})([^\t\ ].+)$')
-        self.break_matcher = re.compile(r'^\s*END OF ')
-
-        self.blacklisted_speakers = (
-            'STORY BY',
-            'SHOOTING SCRIPT',
-            'JULY 19',
-        )
-
-        self.speaker_corrections = {
-            '0\'BRIEN': 'O\'BRIEN',
-            'CRUSHER': 'BEVERLY',
-            'EE I CHAR': 'EE\'CHAR',
-            'ENSIGN RO': 'RO',
-            'LA FORGE': 'GEORDI',
-            'SCOTT': 'SCOTTY',
-            'WES': 'WESLEY',
-        }
 
     def extract_lines(self):
         """
