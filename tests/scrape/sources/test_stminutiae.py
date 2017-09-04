@@ -3,14 +3,14 @@ import tempfile
 
 import six
 
-from trekipsum.scrape import stminutiae
+from trekipsum.scrape.sources import stminutiae
 
 try:
     from unittest import mock
 except ImportError:
     import mock
 
-TESTS_ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TESTS_ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TEST_ASSETS_PATH = os.path.join(TESTS_ROOT_PATH, 'assets')
 
 
@@ -24,7 +24,7 @@ def extract_lines(all_dialog, speaker):
     return [line for line_speaker, line in all_dialog if line_speaker == speaker]
 
 
-@mock.patch('trekipsum.scrape.stminutiae.retriable_session')
+@mock.patch('trekipsum.scrape.sources.stminutiae.retriable_session')
 def test_scrape_script(mock_retriable_session):
     """Test scrape_script successfully pulls down and writes data."""
     with open(os.path.join(TEST_ASSETS_PATH, 'tng.txt')) as source_file:
@@ -47,7 +47,7 @@ def test_scrape_script(mock_retriable_session):
         assert written_contents == dummy_script
 
 
-@mock.patch('trekipsum.scrape.stminutiae.retriable_session')
+@mock.patch('trekipsum.scrape.sources.stminutiae.retriable_session')
 def test_scrape_script_not_found(mock_retriable_session):
     """Test scrape_script handles 404 not found when scraping a script."""
     mock_url = 'http://example.foobar/{}.txt'

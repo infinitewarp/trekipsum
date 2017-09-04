@@ -4,7 +4,7 @@ import re
 
 import six
 
-from trekipsum.scrape.utils import retriable_session
+from ..utils import retriable_session
 
 logger = logging.getLogger(__name__)
 
