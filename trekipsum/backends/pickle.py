@@ -1,3 +1,6 @@
+"""
+Pickle-based dialog chooser is deprecated.
+"""
 from __future__ import absolute_import
 
 import logging
