@@ -1,7 +1,5 @@
 import tqdm
 
-from .stminutiae import Scraper as STMScraper
-
 sources = {}
 
 
@@ -11,82 +9,60 @@ def source(fn):
     return fn
 
 
-# @source  # not yet ready
-# def tos(progress=False):
-#     """Include original series TV scripts."""
-#     raise NotImplementedError()
-
-
-# @source  # not yet ready
-# def tas(progress=False):
-#     """Include animated series TV scripts."""
-#     raise NotImplementedError()
+def _scrape_ids(ids, scraper, name, progress=False):
+    parsed_scripts = []
+    iterator = tqdm.tqdm(ids, 'Processing {} scripts'.format(name)) if progress else ids
+    for script_id in iterator:
+        parsed_scripts += scraper.extract_dialog(script_id)
+    return parsed_scripts
 
 
 @source
-def tng(progress=False):
+def tos(module, progress=False):
+    """Include the original series TV scripts."""
+    return _scrape_ids(module.ids['tos'], module.Scraper(), 'original', progress)
+
+
+@source
+def tas(module, progress=False):
+    """Include the animated series TV scripts."""
+    return _scrape_ids(module.ids['tas'], module.Scraper(), 'animated', progress)
+
+
+@source
+def tng(module, progress=False):
     """Include The Next Generation TV scripts."""
-    parsed_scripts = []
-    scraper = STMScraper()
-    ids = tuple(range(102, 277 + 1))
-    iterator = tqdm.tqdm(ids, 'Processing TNG scripts') if progress else ids
-    for script_id in iterator:
-        parsed_scripts += scraper.extract_dialog(script_id)
-    return parsed_scripts
+    return _scrape_ids(module.ids['tng'], module.Scraper(), 'TNG', progress)
 
 
 @source
-def ds9(progress=False):
+def ds9(module, progress=False):
     """Include Deep Space Nine TV scripts."""
-    parsed_scripts = []
-    scraper = STMScraper()
-    ids = tuple(range(402, 472 + 1)) + tuple(range(474, 575 + 1))
-    iterator = tqdm.tqdm(ids, 'Processing DS9 scripts') if progress else ids
-    for script_id in iterator:
-        parsed_scripts += scraper.extract_dialog(script_id)
-    return parsed_scripts
-
-
-# @source  # not yet ready
-# def voy():
-#     """Include Voyager TV scripts."""
-#     # TODO totally different format needs special treatment
-#     # one collection is http://chakoteya.net/Voyager/episode_listing.htm
-#     raise NotImplementedError()
-
-
-# @source  # not yet ready
-# def ent():
-#     """Include Enterprise TV scripts."""
-#     raise NotImplementedError()
+    return _scrape_ids(module.ids['ds9'], module.Scraper(), 'DS9', progress)
 
 
 @source
-def mov_tos(progress=False):
+def voy(module, progress=False):
+    """Include Voyager TV scripts."""
+    return _scrape_ids(module.ids['voy'], module.Scraper(), 'Voyager', progress)
+
+
+@source
+def ent(module, progress=False):
+    """Include Enterprise TV scripts."""
+    return _scrape_ids(module.ids['ent'], module.Scraper(), 'Enterprise', progress)
+
+
+@source
+def mov_tos(module, progress=False):
     """Include TOS-era movie scripts."""
-    ids = ('tmp', 'twok', 'tsfs', 'tvh', 'tff', 'tuc')
-    parsed_scripts = []
-    scraper = STMScraper()
-    iterator = tqdm.tqdm(ids, 'Processing movie scripts') if progress else ids
-    for script_id in iterator:
-        parsed_scripts += scraper.extract_dialog(script_id)
-    return parsed_scripts
+    return _scrape_ids(module.ids['mov_tos'], module.Scraper(), 'TOS movies', progress)
 
 
 @source
-def mov_tng(progress=False):
+def mov_tng(module, progress=False):
     """Include TNG-era movie scripts."""
-    ids = (
-        'gens',
-        # 'fc',  # first draft. *lots* of changes from final!
-        'ins', 'nem',
-    )
-    parsed_scripts = []
-    scraper = STMScraper()
-    iterator = tqdm.tqdm(ids, 'Processing movie scripts') if progress else ids
-    for script_id in iterator:
-        parsed_scripts += scraper.extract_dialog(script_id)
-    return parsed_scripts
+    return _scrape_ids(module.ids['mov_tng'], module.Scraper(), 'TNG movies', progress)
 
 
 # @source  # not yet ready

@@ -17,6 +17,7 @@ class AbstractScraper(object):
         """Initialize with requests session."""
         self.session = retriable_session()
         self.script_url = None
+        self.timeout = 1.0
 
     def extract_dialog(self, script_id):
         """Parse and extract dialog from script, downloading if needed."""
@@ -48,7 +49,7 @@ class AbstractScraper(object):
         """Scrape script from st-minutiae.com."""
         url = self.script_url.format(script_id)
         logger.debug('attempting to download script from %s', url)
-        response = self.session.get(url, timeout=1.0)
+        response = self.session.get(url, timeout=self.timeout)
         if response:
             with open(to_file_path, mode='w') as f:
                 clean_text = self._clean_response_text(response.text)

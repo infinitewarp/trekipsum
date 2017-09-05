@@ -14,6 +14,17 @@ DEFAULT_ASSETS_PATH = path.join(
     'assets', 'st-minutiae.com')
 DEFAULT_SCRIPT_URL = 'http://www.st-minutiae.com/resources/scripts/{}.txt'
 
+ids = {
+    'tos': (),
+    'tas': (),
+    'tng': tuple(range(102, 277 + 1)),
+    'ds9': tuple(i for i in range(402, 576) if i != 473),
+    'voy': (),
+    'ent': (),
+    'mov_tos': ('tmp', 'twok', 'tsfs', 'tvh', 'tff', 'tuc'),
+    'mov_tng': ('gens', 'fc', 'ins', 'nem'),
+}
+
 
 class Scraper(AbstractScraper):
     """Scrape and parse scripts from st-minutiae.com."""

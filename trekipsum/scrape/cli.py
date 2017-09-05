@@ -5,7 +5,7 @@ import sys
 
 import six
 
-from .sources import sources
+from .sources import chakoteya, sources
 from .writers import dictify_dialog, write_assets, writers
 
 logger = logging.getLogger(__name__)
@@ -95,8 +95,9 @@ def main_cli():
 def read_sources(enabled_sources, progress):
     """Read from all enabled sources and return all combined dialog."""
     all_dialog = []
+    scraper_module = chakoteya  # TODO make this onfigurable?
     for source in enabled_sources:
-        all_dialog += source(progress)
+        all_dialog += source(scraper_module, progress)
     return all_dialog
 
 

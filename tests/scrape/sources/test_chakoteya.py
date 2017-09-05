@@ -13,7 +13,7 @@ def test_parse_script_mock_tos():
     scraper = chakoteya.Scraper()
     scraper.assets_path = TEST_ASSETS_PATH
     with mock.patch.object(scraper, 'scrape_script') as mock_scrape_script:
-        all_dialog = scraper.extract_dialog('tos')
+        all_dialog = scraper.extract_dialog('tos.html')
         assert mock_scrape_script.called is False
 
     expected_speakers = {'SPORK', 'SOLO', 'DIRK', 'CHURCH', 'BONES'}

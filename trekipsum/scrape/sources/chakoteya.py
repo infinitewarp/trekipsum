@@ -12,7 +12,31 @@ logger = logging.getLogger(__name__)
 DEFAULT_ASSETS_PATH = path.join(
     path.dirname(path.dirname(path.dirname(path.abspath(__file__)))),
     'assets', 'chakoteya.net')
-DEFAULT_SCRIPT_URL = 'http://www.chakoteya.net/StarTrek/{}.htm'
+# DEFAULT_SCRIPT_URL = 'http://www.chakoteya.net/{}'
+# It seems chakoteya.net aggressively blocks you if you scrape content. So...
+# DEFAULT_SCRIPT_URL = 'https://webcache.googleusercontent.com/search?q=cache:' \
+#                      'http://www.chakoteya.net/{}'
+# NOTE: Google might also gets upset with a frequent smashing of requests.
+DEFAULT_SCRIPT_URL = 'https://web.archive.org/web/20170627150655/www.chakoteya.net/{}'
+
+ids = {
+    'tos': tuple('StarTrek/{}.htm'.format(i) for i in range(1, 80)),
+    'tas': tuple('StarTrek/TAS{:03d}.htm'.format(i) for i in range(1, 24) if i not in (9, 12)),
+    'tng': tuple('NextGen/{}.htm'.format(i) for i in range(101, 278) if i not in (102,)),
+    'ds9': tuple('DS9/{}.htm'.format(i) for i in range(401, 576) if i not in (402, 474)),
+    'voy': tuple('Voyager/{}.htm'.format(i) for i in
+                 # 101-119, 201-225, 301-321, 401-423, 501-525, 601-625, 701-722
+                 tuple(range(101, 120)) +
+                 tuple(range(201, 226)) +
+                 tuple(range(301, 322)) +
+                 tuple(range(401, 424)) +
+                 tuple(range(501, 526)) +
+                 tuple(range(601, 626)) +
+                 tuple(range(701, 723))),
+    'ent': tuple('Enterprise/{:02d}.htm'.format(i) for i in range(1, 99) if i != 2),
+    'mov_tos': tuple('movies/movie{}.html'.format(i) for i in range(1, 7)),
+    'mov_tng': tuple('movies/movie{}.html'.format(i) for i in range(7, 11)),
+}
 
 
 class Scraper(AbstractScraper):
@@ -24,13 +48,14 @@ class Scraper(AbstractScraper):
 
         self.assets_path = DEFAULT_ASSETS_PATH
         self.script_url = DEFAULT_SCRIPT_URL
+        self.timeout = 5.0  # increase because web.archive.org can be slow
 
     def _extract_from_file(self, fp):
         extractor = Extractor(fp)
         return extractor.extract_lines()
 
     def _path_for_script_id(self, script_id):
-        return path.join(self.assets_path, '{}.html'.format(script_id))
+        return path.join(self.assets_path, '{}'.format(script_id))
 
 
 class Extractor(object):
