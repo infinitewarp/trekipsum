@@ -33,3 +33,5 @@ To initialize the database, run the following command:
     python -m trekipsum.scrape --progress
 
 This `scrape` command supports several other options if you wish to limit your database to particular sources (e.g. "only TNG scripts") or speakers (e.g. "only Spock dialog"). Use the `--help` argument for more details.
+
+**Important Note:** The first time you run the `scrape` command could take *several minutes* to download all of the content, especially if you do not apply any limits. You may want to grab a drink while you wait. :coffee:
