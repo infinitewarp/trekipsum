@@ -94,21 +94,24 @@ class Extractor(object):
         """
         self.__lines = []
 
-        for p in self.soup.find_all('p'):
+        for body in self.soup.find_all('body'):
             self._reset_dialog()
-            for line in p.text.split('\n'):
+            for line in body.text.split('\n'):
                 line = line.strip()
 
                 if len(line) == 0:
                     self._flush()
+                    continue
 
                 new_speaker_match = self.new_speaker_matcher.match(line)
                 if new_speaker_match:
                     speaker = new_speaker_match.group(1).strip()
                     text = new_speaker_match.group(2).strip()
                     self._on_new_speaker_match(speaker, text)
+                    continue
                 else:
                     self._on_text_match(line)
+                    continue
 
             # special case to handle the very last line of dialog
             if self.__speaker is not None and len(self.__dialog) > 0:
