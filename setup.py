@@ -17,15 +17,18 @@ setup(
     author='Brad Smith',
     license='MIT',
     packages=find_packages(exclude=['tests']),
-    package_data={
-        'trekipsum': ['assets/*.pickle'],
-    },
-    install_requires=['six'],
+    install_requires=[
+        'beautifulsoup4',
+        'requests',
+        'six',
+        'tqdm',
+        'urllib3',
+    ],
     dependency_links=[],
     zip_safe=True,
     entry_points={
         'console_scripts': [
-            'trekipsum = trekipsum:main_cli',
+            'trekipsum = trekipsum.cli:main_cli',
         ],
     }
 )
