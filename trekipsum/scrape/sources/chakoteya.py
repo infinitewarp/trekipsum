@@ -66,6 +66,8 @@ class Extractor(object):
     sub_parens = r'\(.*?\)'
     sub_braces = r'\[.*?\]'
     sub_spaces = r'\ \ +'
+    sub_ellipsis = r'([^\s])\s+\.{3}([A-Za-z])'
+    sub_ellipsis_replace = r'\1 \2'
 
     speaker_corrections = {
         'MCCOY': 'BONES',
@@ -142,6 +144,8 @@ class Extractor(object):
             text = text.replace('\t', ' ')
         if '  ' in text:
             text = re.sub(self.sub_spaces, ' ', text)
+        if '...' in text:
+            text = re.sub(self.sub_ellipsis, self.sub_ellipsis_replace, text)
         return text.strip()
 
     def _on_new_speaker_match(self, speaker, text):
