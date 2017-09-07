@@ -10,7 +10,7 @@ from os import path
 
 import six
 
-from ..exceptions import SpeakerNotFoundException
+from ..exceptions import NoDialogFoundException
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class DialogChooser(object):
                 self._all_dialog = pickle.load(pickle_file)
             if self.speaker is not None:
                 if self.speaker not in self.all_dialog:
-                    raise SpeakerNotFoundException(self.speaker)
+                    raise NoDialogFoundException(self.speaker)
                 self._all_dialog = {
                     self.speaker: self._all_dialog[self.speaker]
                 }

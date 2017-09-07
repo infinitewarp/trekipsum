@@ -50,7 +50,7 @@ def test_chooser_all_dialog_for_specific_speaker_not_found():
         mock_pickle_file.seek(0)
         chooser = ti_pickle.DialogChooser(speaker='PIKARD')
         chooser._pickle_path = mock_pickle_file.name
-        with pytest.raises(exceptions.SpeakerNotFoundException):
+        with pytest.raises(exceptions.NoDialogFoundException):
             chooser.all_dialog
 
 
