@@ -126,6 +126,7 @@ class Extractor(object):
         self.__dialog = ''
 
     def _append_line(self):
+        self.__dialog = self._clean_text(self.__dialog)
         self.__lines.append((self.__speaker, self.__dialog))
         self._reset_dialog()
 
@@ -152,7 +153,6 @@ class Extractor(object):
         self._flush()
 
         speaker = self._clean_text(speaker).upper()
-        text = self._clean_text(text)
 
         if ' + ' in speaker:
             speakers = map(lambda x:
