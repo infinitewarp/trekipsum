@@ -10,14 +10,27 @@ except ImportError:
     import mock
 
 
-def test_parse_cli_args():
-    """Test parse_cli_args for typical CLI arguments."""
-    cli_args = shlex.split('. --speaker pikard --no-attribute')
+def test_parse_cli_args_default():
+    """Test parse_cli_args for no CLI arguments."""
+    cli_args = shlex.split('.')
+    with mock.patch('argparse._sys.argv', cli_args):
+        args = cli.parse_cli_args()
+    assert args.speaker is None
+    assert args.paragraphs == 3
+    assert args.sentences == 4
+    assert args.attribute is False
+    assert args.debug is False
+
+
+def test_parse_cli_args_misc_args():
+    """Test parse_cli_args for some typical CLI arguments."""
+    cli_args = shlex.split('. --speaker pikard --attribute -n 1 -s 5')
     with mock.patch('argparse._sys.argv', cli_args):
         args = cli.parse_cli_args()
     assert args.speaker == 'pikard'
-    assert args.count == 1
-    assert args.no_attribute is True
+    assert args.paragraphs == 1
+    assert args.sentences == 5
+    assert args.attribute is True
     assert args.debug is False
 
 
@@ -34,4 +47,4 @@ def test_print_dialog_without_speaker(mock_print):
     """Test print_dialog behavior when show_speaker is False."""
     line, speaker, show = 'Did he say, "engage"?', 'DORF', False
     cli.print_dialog(line, speaker, show)
-    mock_print.assert_called_with('\'Did he say, "engage"?\'')
+    mock_print.assert_called_with('Did he say, "engage"?')
