@@ -9,19 +9,38 @@
 
 TrekIpsum is a command-line "lorem ipsum"-like text generator, powered by lines of dialog from the movies and TV series that make up the Star Trek multiverse.
 
-Example usage:
+## Usage
+
+### Command-line arguments
+
+- `--speaker NAME` limits output to the specified name, case insensitive
+- `-a` or `--attribute` includes speaker attribution in the output
+- `-n COUNT` or `--paragraphs COUNT` specifies the number of paragraphs to output (default is 3)
+- `-s COUNT` or `--sentences COUNT` specifies the number of sentences per paragraph to output (default is 4)
+- `-h` or `--help` prints command-line usage
+
+
+### Sample usage and output
 
     $ trekipsum
-    'Aye, sir.' -- Saavik
 
-    $ trekipsum
-    "You're sure this is the right panel?" -- Sisko
+> All right. He was the Crown Prince. I see you're still a step behind everyone else. Making a withdrawal, Quark? Let me guess. A thousand bricks of gold pressed latinum. Put your hands on your head. Turn around.
+>
+> Torres to bridge, can you hear me? You want to bet? I found out why my mother is on her way to Gre'thor. It's because I sent her there. Right. Me, childhood. How old? Torres to Janeway.
+>
+> I hope you won't be the one to collect it. Get us out of here, Travis. Maximum warp. Thank you for lunch. I'll be in, my ready room.
 
-    $ trekipsum --speaker riker --count 4 --no-attribute
-    'Data, give us a visual. Magnfication factor fifty.'
-    "I can't believe anything overtaking us this fast."
-    'Can you correct for it?'
-    'No questions. Just tell me a joke. The funniest joke in history.'
+    $ trekipsum -n 1 -s 2 --attribute
+
+> 'Who are you to decide who lives or dies? Who are you to make that call? Quark, is there something we can do for you?' -- Sisko
+
+    $ trekipsum --speaker riker --paragraphs 3 --sentences 2
+
+> Why? All stations have reported, Captain. There appears to be no immediate threat to our ship or the crew.
+>
+> Very well. Our Chief Engineer will beam over to help you. Close. We would like to get out of here. Now.
+>
+> Mister La Forge, report to Transporter room three. It is now. You're about to commit a murder.
 
 
 ## First-time Setup
