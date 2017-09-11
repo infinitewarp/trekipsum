@@ -64,7 +64,11 @@ class Extractor(object):
     # new_speaker_matcher = re.compile(r'^([A-Z\.\-\ ]+)(\[[a-zA-Z\ ]+\])?: (.+)$')
     new_speaker_matcher = re.compile(r'^([^:]*):(.*)$')
     sub_parens = r'\(.*?\)'
+    sub_parens_without_open = r'^[^\(]*?\)'
+    sub_parens_without_close = r'\([^\)]*$'
     sub_braces = r'\[.*?\]'
+    sub_braces_without_open = r'^[^\[]*?\]'
+    sub_braces_without_close = r'\[[^\]]*$'
     sub_spaces = r'\ \ +'
     sub_ellipsis = r'([^\s])\s+\.{3}([A-Za-z])'
     sub_ellipsis_replace = r'\1 \2'
@@ -96,9 +100,9 @@ class Extractor(object):
         """
         self.__lines = []
 
-        for body in self.soup.find_all('body'):
-            self._reset_dialog()
-            for line in body.text.split('\n'):
+        self._reset_dialog()
+        for body_lines in self.soup.find_all('body').pop().stripped_strings:
+            for line in body_lines.split('\n'):
                 line = line.strip()
 
                 if len(line) == 0:
@@ -127,7 +131,9 @@ class Extractor(object):
 
     def _append_line(self):
         self.__dialog = self._clean_text(self.__dialog)
-        self.__lines.append((self.__speaker, self.__dialog))
+        self.__speaker = self._clean_text(self.__speaker)
+        if len(self.__speaker) > 0 and len(self.__dialog) > 0:
+            self.__lines.append((self.__speaker, self.__dialog))
         self._reset_dialog()
 
     def _flush(self):
@@ -137,10 +143,18 @@ class Extractor(object):
             self._reset_dialog()
 
     def _clean_text(self, text):
-        if '(' in text:
+        if '(' in text:  # strip parentheticals
             text = re.sub(self.sub_parens, '', text)
-        if '[' in text:
+        if ')' in text:  # strip partial parens with no opening
+            text = re.sub(self.sub_parens_without_open, '', text, count=1)
+        if '(' in text:  # strip partial parens with no closing
+            text = re.sub(self.sub_parens_without_close, '', text, count=1)
+        if '[' in text:  # strip braced blocks
             text = re.sub(self.sub_braces, '', text)
+        if ']' in text:  # strip partial braced blocks with no opening
+            text = re.sub(self.sub_braces_without_open, '', text, count=1)
+        if '[' in text:  # strip partial braced blocks with no closing
+            text = re.sub(self.sub_braces_without_close, '', text, count=1)
         if '\t' in text:
             text = text.replace('\t', ' ')
         if '  ' in text:
@@ -169,7 +183,6 @@ class Extractor(object):
             self.__dialog = text
 
     def _on_text_match(self, text):
-        text = self._clean_text(text)
         if self.__speaker is not None:
             if len(text) > 0:
                 self.__dialog = '{} {}'.format(self.__dialog, text)
