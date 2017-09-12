@@ -19,12 +19,12 @@ def writer(fn):
 
 
 @writer
-def raw(file_path, all_dialog, speakers=None, format='{speaker}:\n{line}\n\n', **kwargs):
+def raw(file_path, dialog_list, speakers=None, format='{speaker}:\n{line}\n\n', **kwargs):
     """Write raw text to file at specified path."""
     file_path = os.path.abspath(file_path)
     logger.info('dumping raw to %s', file_path)
     with open(file_path, 'w') as raw_file:
-        for speaker, line in all_dialog:
+        for speaker, line in dialog_list:
             if not speakers or speaker in speakers:
                 raw_file.write(format.format(speaker=speaker, line=line))
 
