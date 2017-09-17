@@ -1,5 +1,7 @@
 import logging
 import re
+import string
+import uuid
 from os import path
 
 from bs4 import BeautifulSoup
@@ -61,8 +63,9 @@ class Scraper(AbstractScraper):
 class Extractor(object):
     """Parse and extract lines of dialog from HTML script."""
 
-    # new_speaker_matcher = re.compile(r'^([A-Z\.\-\ ]+)(\[[a-zA-Z\ ]+\])?: (.+)$')
-    new_speaker_matcher = re.compile(r'^([^:]*):(.*)$')
+    line_with_speaker_matcher = re.compile(r'^([^:]*):(.*)$')
+    captains_log_matcher = re.compile(r'.*\w\'S\ LOG.*')
+
     sub_parens = r'\(.*?\)'
     sub_parens_without_open = r'^[^\(]*?\)'
     sub_parens_without_close = r'\([^\)]*$'
@@ -82,6 +85,15 @@ class Extractor(object):
         'ORIGINAL AIRDATE',
     )
 
+    script_ends = (
+        'END CREDITS',
+        'CREDITS',
+        'THE HUMAN ADVENTURE IS JUST BEGINNING.',
+        '...AND THE ADVENTURE CONTINUES...',
+    )
+
+    br_separator_token = str(uuid.uuid4())
+
     def __init__(self, script):
         """
         Initialize Extractor with provided script.
@@ -89,7 +101,7 @@ class Extractor(object):
         Args:
             script (iterable): strings for each line of a script file
         """
-        self.soup = BeautifulSoup(script, 'html.parser')
+        self.script = '\n'.join(script)
 
     def extract_lines(self):
         """
@@ -99,40 +111,62 @@ class Extractor(object):
             list: list of tuples containing (speaker name, line of dialog)
         """
         self.__lines = []
+        script = self.script.replace('</p>', '').replace('<p>', '<br>')
+        script = script.replace('<b>', '').replace('</b>', '')
+        script = script.replace('\n.\n', '\n\n')
+        soup = BeautifulSoup(script, 'html.parser')
 
         self._reset_dialog()
-        for body_lines in self.soup.find_all('body').pop().stripped_strings:
-            for line in body_lines.split('\n'):
-                line = line.strip()
+        for br in soup.find_all('br'):
+            br.replace_with(self.br_separator_token)
 
-                if len(line) == 0:
+        body_text = soup.find('table').text
+        body_text = body_text.replace('\n', ' ')
+        body_text = body_text.replace(self.br_separator_token, '\n\n')
+        in_break = False
+        for line in body_text.split('\n'):
+            line = line.strip()
+
+            if len(line) == 0:
+                if in_break:
                     self._flush()
-                    continue
-
-                new_speaker_match = self.new_speaker_matcher.match(line)
-                if new_speaker_match:
-                    speaker = new_speaker_match.group(1).strip()
-                    text = new_speaker_match.group(2).strip()
-                    self._on_new_speaker_match(speaker, text)
-                    continue
                 else:
-                    self._on_text_match(line)
-                    continue
+                    in_break = True
+                continue
 
-            # special case to handle the very last line of dialog
-            if self.__speaker is not None and len(self.__dialog) > 0:
-                self._append_line()
+            in_break = False
+            if self._is_end_of_script(line):
+                self._flush()
+                break
+
+            line_with_speaker_match = self.line_with_speaker_matcher.match(line)
+            if line_with_speaker_match:
+                speaker = line_with_speaker_match.group(1).strip()
+                text = line_with_speaker_match.group(2).strip()
+                self._on_speaker_and_text_match(speaker, text)
+                continue
+            else:
+                self._on_text_only_match(line)
+                continue
+
+        # special case to handle the very last line of dialog
+        if len(self.__speaker) > 0 and len(self.__dialog) > 0:
+            self._append_line()
 
         return self.__lines
 
     def _reset_dialog(self):
-        self.__speaker = None
+        self.__speaker = ''
         self.__dialog = ''
 
     def _append_line(self):
         self.__dialog = self._clean_text(self.__dialog)
         self.__speaker = self._clean_text(self.__speaker)
+
         if len(self.__speaker) > 0 and len(self.__dialog) > 0:
+            if self.__dialog[-1] not in string.punctuation:
+                # dialog ending mid-stride is bad
+                self.__dialog += '...'
             self.__lines.append((self.__speaker, self.__dialog))
         self._reset_dialog()
 
@@ -157,34 +191,56 @@ class Extractor(object):
             text = re.sub(self.sub_braces_without_close, '', text, count=1)
         if '\t' in text:
             text = text.replace('\t', ' ')
-        if '  ' in text:
+        if '  ' in text:  # collapse multiple spaces to one
             text = re.sub(self.sub_spaces, ' ', text)
         if '...' in text:
             text = re.sub(self.sub_ellipsis, self.sub_ellipsis_replace, text)
         return text.strip()
 
-    def _on_new_speaker_match(self, speaker, text):
-        self._flush()
+    def _is_end_of_script(self, text):
+        if text.startswith('&lt;Back'):
+            return True
+        if text in self.script_ends:
+            return True
+        return False
 
+    def _on_speaker_and_text_match(self, speaker, text):
         speaker = self._clean_text(speaker).upper()
+
+        if self.captains_log_matcher.match(speaker):
+            # TODO better handling of captain's logs
+            # NOTE ranks other than captain make these logs too
+            self._flush()
+            return
 
         if ' + ' in speaker:
             speakers = map(lambda x:
                            self.speaker_corrections[x] if x in self.speaker_corrections else x,
-                           text.split(' + '))
+                           speaker.split(' + '))
             speaker = '/'.join(sorted(speakers))
         elif speaker in self.speaker_corrections:
             speaker = self.speaker_corrections[speaker]
         elif speaker in self.blacklisted_speakers:
             return
 
-        if len(speaker) > 0 and len(text) > 0:
+        if len(speaker) == 0 or len(text) == 0:
+            return
+
+        if speaker != self.__speaker:
+            self._flush()
             self.__speaker = speaker
             self.__dialog = text
+        else:
+            self.__dialog = '{} {}'.format(self.__dialog, text)
 
-    def _on_text_match(self, text):
-        if self.__speaker is not None:
+    def _on_text_only_match(self, text):
+        if self.captains_log_matcher.match(text.upper()):
+            # TODO better handling of captain's logs
+            # NOTE ranks other than captain make these logs too
+            self._flush()
+
+        if len(self.__speaker) > 0:
             if len(text) > 0:
                 self.__dialog = '{} {}'.format(self.__dialog, text)
         else:
-            self._flush()
+            self._reset_dialog()
