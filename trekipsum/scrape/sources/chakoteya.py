@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import re
 import string
@@ -64,7 +65,8 @@ class Extractor(object):
     """Parse and extract lines of dialog from HTML script."""
 
     line_with_speaker_matcher = re.compile(r'^([^:]*):(.*)$')
-    captains_log_matcher = re.compile(r'.*\w\'S\ LOG.*')
+    captains_log_matcher = re.compile(r'.*\w\'S\ (?:PERSONAL\ )?(?:STAR)?LOG.*')
+    speaker_semicolon_matcher = re.compile(r'^([A-Z\ \[\]\.]+);(.*)')
 
     sub_parens = r'\(.*?\)'
     sub_parens_without_open = r'^[^\(]*?\)'
@@ -72,17 +74,51 @@ class Extractor(object):
     sub_braces = r'\[.*?\]'
     sub_braces_without_open = r'^[^\[]*?\]'
     sub_braces_without_close = r'\[[^\]]*$'
+    sub_curly = r'{.*?}'
+    sub_curly_without_open = r'^[^{]*?}'
+    sub_curly_without_close = r'{[^}]*$'
     sub_spaces = r'\ \ +'
     sub_ellipsis = r'([^\s])\s+\.{3}([A-Za-z])'
     sub_ellipsis_replace = r'\1 \2'
 
     speaker_corrections = {
+        '#2': 'CREWMAN #2',
+        '.JANEWAY': 'JANEWAY',
+        '0\'BRIEN': 'O\'BRIEN',
+        '\' GILMORE': 'GILMORE',
+        'ALICE 118+2': 'ALICE 118/ALICE 2',
+        'ALIEN 1+4': 'ALIEN 1/ALIEN 4',
+        'ALL EXCEPT MARTOK': 'ALL',
+        'AQUATIC2': 'AQUATIC 2',
+        'B-4 HEAD': 'B-4',
+        'BEVERLY': 'CRUSHER',
+        'COMM. OFFICER': 'COMM OFFICER',
+        'DAX.': 'DAX',
+        'DILLARD?': 'DILLARD',
+        'G SPOCK': 'SPOCK',
+        'JEAN LUC': 'PICARD',
+        'JEAN-LUC': 'PICARD',
+        'KIM|': 'KIM',
+        'LAFORGE': 'GEORDI',
+        'MARIE': 'MARIE PICARD',
+        'MAURICE': 'MAURICE PICARD',
         'MCCOY': 'BONES',
+        'MCCOY2': 'BONES',
+        'O\'BRIEN ET AL': 'O\'BRIEN',
+        'PARIS?STETH': 'PARIS/STETH',
+        'PASSER-BY': 'PASSERBY',
+        'PICARD\'S CHILDREN':
+            'MATTHEW PICARD/MIMI PICARD/THOMAS PICARD/MADISON PICARD/OLIVIA PICARD',
+        'REN\' PICARD': 'RENÉ PICARD',
+        'RENE': 'RENÉ PICARD',
+        'RODRIQUEZ': 'RODRIGUEZ',
+        'T\'GRETH?': 'T\'GRETH',
     }
 
     blacklisted_speakers = (
         'STARDATE',
         'ORIGINAL AIRDATE',
+        'LAST TIME ON STAR TREK',
     )
 
     script_ends = (
@@ -139,6 +175,11 @@ class Extractor(object):
                 self._flush()
                 break
 
+            speaker_semicolon_match = self.speaker_semicolon_matcher.match(line)
+            if speaker_semicolon_match:
+                line = '{}:{}'.format(speaker_semicolon_match.group(1),
+                                      speaker_semicolon_match.group(2))
+
             line_with_speaker_match = self.line_with_speaker_matcher.match(line)
             if line_with_speaker_match:
                 speaker = line_with_speaker_match.group(1).strip()
@@ -189,12 +230,24 @@ class Extractor(object):
             text = re.sub(self.sub_braces_without_open, '', text, count=1)
         if '[' in text:  # strip partial braced blocks with no closing
             text = re.sub(self.sub_braces_without_close, '', text, count=1)
+        if '{' in text:  # strip curly brace blocks
+            text = re.sub(self.sub_curly, '', text)
+        if '}' in text:  # strip partial curly brace blocks with no opening
+            text = re.sub(self.sub_curly_without_open, '', text, count=1)
+        if '{' in text:  # strip partial curly braced block with no closing
+            text = re.sub(self.sub_curly_without_close, '', text, count=1)
         if '\t' in text:
             text = text.replace('\t', ' ')
         if '  ' in text:  # collapse multiple spaces to one
             text = re.sub(self.sub_spaces, ' ', text)
         if '...' in text:
             text = re.sub(self.sub_ellipsis, self.sub_ellipsis_replace, text)
+        if u'�' in text:
+            text = text.replace('�', '\'')
+        if u'�' in text:
+            text = text.replace('�', 'é')
+        if u'�' in text:
+            text = text.replace('�', 'É')
         return text.strip()
 
     def _is_end_of_script(self, text):
@@ -213,15 +266,22 @@ class Extractor(object):
             self._flush()
             return
 
-        if ' + ' in speaker:
-            speakers = map(lambda x:
-                           self.speaker_corrections[x] if x in self.speaker_corrections else x,
-                           speaker.split(' + '))
-            speaker = '/'.join(sorted(speakers))
-        elif speaker in self.speaker_corrections:
+        if speaker.endswith('\'S VOICE'):
+            speaker = speaker[:-len('\'S VOICE')]
+
+        if speaker in self.speaker_corrections:
             speaker = self.speaker_corrections[speaker]
         elif speaker in self.blacklisted_speakers:
             return
+
+        for conjunction in {'+', ' AND ', '/', ','}:
+            if conjunction in speaker:
+                speakers = map(lambda x:
+                               self.speaker_corrections[x.strip()]
+                               if x.strip() in self.speaker_corrections
+                               else x.strip(),
+                               speaker.split(conjunction))
+                speaker = '/'.join(sorted(speakers))
 
         if len(speaker) == 0 or len(text) == 0:
             return
