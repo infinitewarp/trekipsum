@@ -5,6 +5,11 @@ from trekipsum import markov
 logger = logging.getLogger(__name__)
 
 
+def sort_probs(probs_list):
+    """Sort probabilities list for consistent comparison."""
+    return sorted(probs_list, key=lambda x: x[1])
+
+
 def test_markov_word_chain():
     """Test typical use of the WordChain markov chain class."""
     input_sequence = (
@@ -23,7 +28,7 @@ def test_markov_word_chain():
 
     for leader, probs in expected_probabilities.items():
         assert leader in chain._chain
-        assert probs == chain._chain[leader]
+        assert sort_probs(probs) == sort_probs(chain._chain[leader])
 
 
 def test_markov_sentence_chain():
