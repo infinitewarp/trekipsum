@@ -32,10 +32,9 @@ class DialogChooser(object):
     def dialog_count(self):
         """Lazy-load and return count of all speakers' lines."""
         if self._dialog_count == 0:
-            self._dialog_count = sum(len(lines) for _, lines in six.iteritems(self.all_dialog))
+            self._dialog_count = sum(len(lines) for _, lines in six.iteritems(self.all_dialog()))
         return self._dialog_count
 
-    @property
     def all_dialog(self):
         """Lazy-load and return all dialog."""
         if self._all_dialog is None:
@@ -43,7 +42,7 @@ class DialogChooser(object):
             with open(self._pickle_path, mode='rb') as pickle_file:
                 self._all_dialog = pickle.load(pickle_file)
             if self.speaker is not None:
-                if self.speaker not in self.all_dialog:
+                if self.speaker not in self.all_dialog():
                     raise NoDialogFoundException(self.speaker)
                 self._all_dialog = {
                     self.speaker: self._all_dialog[self.speaker]
@@ -65,7 +64,7 @@ class DialogChooser(object):
         """
         logger.debug('choosing random from count %s', self.dialog_count)
         offset = random.randrange(self.dialog_count)
-        for speaker, lines in six.iteritems(self.all_dialog):
+        for speaker, lines in six.iteritems(self.all_dialog()):
             count = len(lines)
             if offset >= count:
                 offset -= count

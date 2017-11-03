@@ -15,7 +15,7 @@ except ImportError:
     import mock
 
 
-@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog', new_callable=mock.PropertyMock)
+@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog')
 def test_chooser_dialog_count(mock_all_dialog):
     """Test RandomDialogChooser.dialog_count counts correctly."""
     mock_all_dialog.return_value = {
@@ -40,7 +40,7 @@ def test_chooser_all_dialog_for_specific_speaker():
         mock_pickle_file.seek(0)
         chooser = ti_pickle.DialogChooser(speaker='PIKARD')
         chooser._pickle_path = mock_pickle_file.name
-        assert chooser.all_dialog == expected_chooser_dialog
+        assert chooser.all_dialog() == expected_chooser_dialog
 
 
 def test_chooser_all_dialog_for_specific_speaker_not_found():
@@ -51,7 +51,7 @@ def test_chooser_all_dialog_for_specific_speaker_not_found():
         chooser = ti_pickle.DialogChooser(speaker='PIKARD')
         chooser._pickle_path = mock_pickle_file.name
         with pytest.raises(exceptions.NoDialogFoundException):
-            chooser.all_dialog
+            chooser.all_dialog()
 
 
 def is_cpython2():
@@ -60,7 +60,7 @@ def is_cpython2():
 
 
 @mock.patch('trekipsum.backends.pickle.random.randrange')
-@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog', new_callable=mock.PropertyMock)
+@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog')
 @pytest.mark.skipif(is_cpython2(), reason='mock fails to mock random.randrange in py27')
 def test_chooser_random_dialog(mock_all_dialog, mock_randrange):
     """Test RandomDialogChooser.random_dialog picks the right item based on randrange."""
