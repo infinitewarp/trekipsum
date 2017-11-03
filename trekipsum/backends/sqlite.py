@@ -22,6 +22,8 @@ class DialogChooser(object):
     SQL_GET_RANDOM_SPEAKER = 'SELECT DISTINCT speaker FROM dialog ORDER BY RANDOM() LIMIT 1'
     SQL_GET_RANDOM_SPEAKER_EXCLUDING = 'SELECT DISTINCT speaker FROM dialog WHERE speaker <> ?' \
                                        'ORDER BY RANDOM() LIMIT 1'
+    SQL_GET_ALL = 'SELECT speaker, line FROM dialog'
+    SQL_GET_ALL_BY_SPEAKER = 'SELECT speaker, line FROM dialog WHERE speaker = ?'
 
     def __init__(self):
         """Initialize with no dialog and default sqlite path."""
@@ -80,3 +82,20 @@ class DialogChooser(object):
         else:
             return self._conn.execute(self.SQL_GET_RANDOM_SPEAKER_EXCLUDING,
                                       (not_speaker.upper(),)).fetchone()[0]
+
+    def all_dialog(self, speaker=None):
+        """
+        Yield all available dialog, optionally limited to specific speaker.
+
+        Returns:
+            generator of tuples containing (speaker name, line of dialog)
+        """
+        if speaker is not None:
+            speaker = speaker.upper()
+            result = self._conn.execute(self.SQL_GET_ALL_BY_SPEAKER, (speaker,))
+        else:
+            result = self._conn.execute(self.SQL_GET_ALL)
+        row = result.fetchone()
+        while row is not None:
+            yield row
+            row = result.fetchone()
