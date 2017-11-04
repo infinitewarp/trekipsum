@@ -10,8 +10,8 @@ def sort_probs(probs_list):
     return sorted(probs_list, key=lambda x: x[1])
 
 
-def test_markov_word_chain():
-    """Test typical use of the WordChain markov chain class."""
+def test_markov_word_chain_builder():
+    """Test typical use of the WordChainBuilder markov chain class."""
     input_sequence = (
         'PIKARD', 'Q', 'PIKARD', 'DORF', 'PIKARD', 'Q', 'ROKER', 'Q', 'PIKARD'
     )
@@ -21,18 +21,18 @@ def test_markov_word_chain():
         'DORF': [('PIKARD', 1.0)],
         'ROKER': [('Q', 1.0)],
     }
-    chain = markov.WordChain()
+    builder = markov.WordChainBuilder()
     for word in input_sequence:
-        chain.add_next(word)
-    chain.normalize()
+        builder.add_next(word)
+    chain = builder.normalize()
 
     for leader, probs in expected_probabilities.items():
-        assert leader in chain._chain
-        assert sort_probs(probs) == sort_probs(chain._chain[leader])
+        assert leader in chain
+        assert sort_probs(probs) == sort_probs(chain[leader])
 
 
-def test_markov_sentence_chain():
-    """Test typical use of the SentenceChain markov chain class."""
+def test_markov_sentence_chain_builder_and_walker():
+    """Test typical use of the SentenceChainBuilder markov chain class."""
     input_line = 'That would be illogical, Captain. There would be no profit.'
     expected_words = {
         'That', 'would', 'be', 'illogical,', 'Captain.',
@@ -45,18 +45,19 @@ def test_markov_sentence_chain():
         'There would be no profit.',
         'There would be illogical, Captain.',
     }
-    chain = markov.SentenceChain()
-    chain.process_string(input_line)
-    chain.normalize()
+    builder = markov.SentenceChainBuilder()
+    builder.process_string(input_line)
+    chain = builder.normalize()
 
     for expected_word in expected_words:
-        assert expected_word in chain._chain
-    assert len(chain._chain) == len(expected_words) + 1  # plus EOL token
+        assert expected_word in chain
+    assert len(chain) == len(expected_words) + 1  # plus EOL token
 
     for expected_word in expected_first_words:
-        assert expected_word in (word for word, value in chain._chain[''])
-    assert len(chain._chain['']) == len(expected_first_words)
+        assert expected_word in (word for word, value in chain[''])
+    assert len(chain['']) == len(expected_first_words)
 
+    walker = markov.ChainWalker(chain)
     for _ in range(10):  # it's "good enough".
-        sentence = chain.generate_sentence()
+        sentence = walker.build_sentence()
         assert sentence in possible_phrases
