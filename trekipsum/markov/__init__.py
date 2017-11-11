@@ -161,6 +161,9 @@ class DialogChainDatastore(object):
         """Reinitialize the database tables."""
         self._conn.execute(self.SQL_DROP)
         self._conn.execute(self.SQL_CREATE)
+
+    def index(self):
+        """Create DB indexes for (hopefully) faster lookup."""
         self._conn.execute(self.SQL_INDEX1)
         self._conn.execute(self.SQL_INDEX2)
 
