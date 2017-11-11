@@ -2,6 +2,11 @@ import logging
 
 from trekipsum import markov
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,3 +66,31 @@ def test_markov_sentence_chain_builder_and_walker():
     for _ in range(10):  # it's "good enough".
         sentence = walker.build_sentence()
         assert sentence in possible_phrases
+
+
+@mock.patch('trekipsum.markov.DEFAULT_SQLITE_PATH', new=':memory:')
+def test_markov_chain_datastore():
+    """Test typical use of the DialogChainDatastore."""
+    chain = {
+        'PIKARD': [('Q', 2.0 / 3), ('DORF', 1.0 / 3)],
+        'Q': [('PIKARD', 2.0 / 3), ('ROKER', 1.0 / 3)],
+        'DORF': [('PIKARD', 1.0)],
+        'ROKER': [('Q', 1.0)],
+    }
+    with markov.DialogChainDatastore() as store:
+        store.reinitialize()
+        store.store_chain('speakers', chain)
+
+        contexts = store.get_contexts()
+        assert contexts == ['speakers']
+
+        vocabulary = store.get_vocabulary('speakers')
+        assert set(vocabulary) == set(chain.keys())
+
+        candidates = store.get_next_word_candidates('speakers', 'PIKARD')
+        assert sort_probs(chain['PIKARD']) == sort_probs(candidates)
+        candidates = store.get_next_word_candidates('speakers', 'ROKER')
+        assert sort_probs(chain['ROKER']) == sort_probs(candidates)
+
+        assert store.word_exists('speakers', 'PIKARD')
+        assert not store.word_exists('speakers', 'STEVE')
