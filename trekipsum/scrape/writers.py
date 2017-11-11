@@ -53,14 +53,15 @@ def sqlite(file_path, dialog_list, **kwargs):
     query = 'INSERT INTO dialog (speaker, line) VALUES (?,?)'
     index_sql = 'CREATE INDEX dialog_speaker_idx ON dialog(speaker)'
 
-    with contextlib.closing(sqlite3.connect(file_path)) as conn, conn:
-        conn.execute(drop_sql)
-        conn.execute(create_sql)
-        for speaker, line in dialog_list:
-            # for line in lines:
-            args = (speaker, line)
-            conn.execute(query, args)
-        conn.execute(index_sql)
+    with contextlib.closing(sqlite3.connect(file_path)) as conn:
+        with conn as cursor:
+            cursor.execute(drop_sql)
+            cursor.execute(create_sql)
+            for speaker, line in dialog_list:
+                # for line in lines:
+                args = (speaker, line)
+                cursor.execute(query, args)
+            cursor.execute(index_sql)
 
 
 @writer
