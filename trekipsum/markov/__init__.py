@@ -142,9 +142,9 @@ class DialogChainDatastore(object):
                                      'FROM markov WHERE context=? AND word=? ' \
                                      'ORDER BY weight DESC, next_word ASC'
 
-    def __init__(self):
+    def __init__(self, file_path=None):
         """Initialize a new dialog chain datastore accessor."""
-        self._sqlite_path = DEFAULT_SQLITE_PATH
+        self._sqlite_path = file_path or DEFAULT_SQLITE_PATH
         self._conn = sqlite3.connect(self._sqlite_path)
 
     def __enter__(self):
