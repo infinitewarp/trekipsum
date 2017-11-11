@@ -57,7 +57,7 @@ class SentenceChainBuilder(WordChainBuilder):
         for word in words:
             self.add_link(last_word, word)
             last_word = word
-            if word[-1] == '.' and len(word.strip('.')) > 0:
+            if word[-1] in ('.', '!', '?') and len(word.strip('.')) > 0:
                 # specially handle word ending with period as end of sentence
                 last_word = delimiter
                 self.add_link(word, last_word)
