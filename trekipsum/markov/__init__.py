@@ -151,6 +151,7 @@ class DialogChainDatastore(object):
         return self
 
     def __exit__(self, *args):
+        self._conn.commit()
         self._conn.close()
 
     def __del__(self, *args):
