@@ -7,7 +7,7 @@ import pytest
 import six
 
 from trekipsum import exceptions
-from trekipsum.backends import pickle as ti_pickle
+from trekipsum.dialog import pickle as ti_pickle
 
 try:
     from unittest import mock
@@ -15,7 +15,7 @@ except ImportError:
     import mock
 
 
-@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog')
+@mock.patch('trekipsum.dialog.pickle.DialogChooser.all_dialog')
 def test_chooser_dialog_count(mock_all_dialog):
     """Test RandomDialogChooser.dialog_count counts correctly."""
     mock_all_dialog.return_value = {
@@ -59,8 +59,8 @@ def is_cpython2():
     return six.PY2 and platform.python_implementation() == 'CPython'
 
 
-@mock.patch('trekipsum.backends.pickle.random.randrange')
-@mock.patch('trekipsum.backends.pickle.DialogChooser.all_dialog')
+@mock.patch('trekipsum.dialog.pickle.random.randrange')
+@mock.patch('trekipsum.dialog.pickle.DialogChooser.all_dialog')
 @pytest.mark.skipif(is_cpython2(), reason='mock fails to mock random.randrange in py27')
 def test_chooser_random_dialog(mock_all_dialog, mock_randrange):
     """Test RandomDialogChooser.random_dialog picks the right item based on randrange."""

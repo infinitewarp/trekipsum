@@ -5,7 +5,7 @@ import os
 import pickle as _pickle
 import sqlite3
 
-from ..backends.sqlite import DEFAULT_SQLITE_PATH
+from ..dialog.sqlite import DEFAULT_SQLITE_PATH
 from ..scrape.utils import magicdictlist
 
 logger = logging.getLogger(__name__)

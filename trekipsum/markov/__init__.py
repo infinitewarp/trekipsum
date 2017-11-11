@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import six
 
-from ..backends.sqlite import DEFAULT_SQLITE_PATH
+from ..dialog.sqlite import DEFAULT_SQLITE_PATH
 
 SENTENCE_DELIMITER = ''  # special value for beginning/ending a sentence
 

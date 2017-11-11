@@ -3,7 +3,7 @@ from __future__ import print_function
 import argparse
 import logging
 
-from trekipsum import backends
+from trekipsum import dialog
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def main_cli():
     loglevel = logging.DEBUG if args.debug else logging.CRITICAL
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s')
     logger.setLevel(loglevel)
-    chooser = backends.SqliteRandomChooser()
+    chooser = dialog.SqliteRandomChooser()
     for paragraph in range(args.paragraphs):
         speaker = args.speaker
         lines = []
