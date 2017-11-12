@@ -6,6 +6,7 @@ from collections import defaultdict
 import six
 
 from ..dialog.sqlite import DEFAULT_SQLITE_PATH
+from ..exceptions import NoDialogFoundException
 
 SENTENCE_DELIMITER = ''  # special value for beginning/ending a sentence
 
@@ -214,3 +215,34 @@ class DialogChainDatastore(object):
         for link in links:
             chain[link[0]].append((link[1], link[2]))
         return chain
+
+
+class MarkovRandomChooser(object):
+    """Walk Markov chains to generate dialog from datastore."""
+
+    def __init__(self):
+        """Initialize a new dialog markov chain chooser for dialog."""
+        self._datastore = DialogChainDatastore()
+        self._speaker_walker = ChainWalker(self._datastore.to_chain('speakers'))
+
+    def random_dialog(self, speaker):
+        """
+        Get random line of dialog, optionally limited to specific speaker.
+
+        Returns:
+            tuple containing (speaker name, line of dialog)
+        """
+        speaker = speaker.upper() if speaker else None
+        if speaker is None:
+            speaker = self.random_speaker()
+        dialog_walker = ChainWalker(self._datastore.to_chain(speaker))
+        try:
+            return speaker, dialog_walker.build_sentence()
+        except KeyError:
+            raise NoDialogFoundException(speaker)
+
+    def random_speaker(self, from_speaker=None):
+        """
+        Get random speaker name, optionally walking from a specific speaker.
+        """
+        return self._speaker_walker.next_word(from_speaker)

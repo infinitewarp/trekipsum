@@ -3,7 +3,7 @@ from __future__ import print_function
 import argparse
 import logging
 
-from trekipsum import dialog
+from trekipsum import dialog, markov
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,8 @@ def positive(value):
 def parse_cli_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='TrekIpsum generator')
+    parser.add_argument('-m', '--markov', action='store_true',
+                        help='use markov chain mode for generation')
     parser.add_argument('--speaker', type=str,
                         help='limit output to this speakers')
     parser.add_argument('-a', '--attribute', action='store_true',
@@ -47,7 +49,12 @@ def main_cli():
     loglevel = logging.DEBUG if args.debug else logging.CRITICAL
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s')
     logger.setLevel(loglevel)
-    chooser = dialog.SqliteRandomChooser()
+
+    if args.markov is True:
+        chooser = markov.MarkovRandomChooser()
+    else:
+        chooser = dialog.SqliteRandomChooser()
+
     for paragraph in range(args.paragraphs):
         speaker = args.speaker
         lines = []
