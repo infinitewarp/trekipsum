@@ -141,6 +141,9 @@ class DialogChainDatastore(object):
     SQL_SELECT_BY_CONTEXT_AND_WORD = 'SELECT next_word, weight ' \
                                      'FROM markov WHERE context=? AND word=? ' \
                                      'ORDER BY weight DESC, next_word ASC'
+    SQL_SELECT_BY_CONTEXT = 'SELECT word, next_word, weight ' \
+                            'FROM markov WHERE context=? ' \
+                            'ORDER BY weight DESC, next_word ASC'
 
     def __init__(self, file_path=None):
         """Initialize a new dialog chain datastore accessor."""
@@ -196,3 +199,18 @@ class DialogChainDatastore(object):
         """Get all next word candidates with their weights for the given context and word."""
         result = self._conn.execute(self.SQL_SELECT_BY_CONTEXT_AND_WORD, (context, word))
         return result.fetchall()
+
+    def to_chain(self, context):
+        """
+        Fetch and construct a chain for use in probabilistic walking.
+
+        Returns:
+            dict(list(tuple)) like {'a': [('a', 0.1), ('b', 0.2), ('c', 0.7)]}
+        """
+        result = self._conn.execute(self.SQL_SELECT_BY_CONTEXT, (context,))
+        links = result.fetchall()
+
+        chain = defaultdict(lambda: list())
+        for link in links:
+            chain[link[0]].append((link[1], link[2]))
+        return chain

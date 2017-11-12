@@ -1,5 +1,7 @@
 import logging
 
+import six
+
 from trekipsum import markov
 
 try:
@@ -94,3 +96,21 @@ def test_markov_chain_datastore():
 
         assert store.word_exists('speakers', 'PIKARD')
         assert not store.word_exists('speakers', 'STEVE')
+
+
+@mock.patch('trekipsum.markov.DEFAULT_SQLITE_PATH', new=':memory:')
+def test_markov_to_chain():
+    """Test typical use of the DialogChainDatastore."""
+    chain = {
+        'PIKARD': [('Q', 2.0 / 3), ('DORF', 1.0 / 3)],
+        'Q': [('PIKARD', 2.0 / 3), ('ROKER', 1.0 / 3)],
+        'DORF': [('PIKARD', 1.0)],
+        'ROKER': [('Q', 1.0)],
+    }
+    with markov.DialogChainDatastore() as store:
+        store.reinitialize()
+        store.store_chain('speakers', chain)
+        new_chain = store.to_chain('speakers')
+        assert set(chain.keys()) == set(new_chain.keys())
+        for speaker, probabilities in six.iteritems(chain):
+            assert sort_probs(probabilities) == sort_probs(new_chain[speaker])
