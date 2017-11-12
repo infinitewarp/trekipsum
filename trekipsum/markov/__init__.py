@@ -77,7 +77,7 @@ class ChainWalker(object):
     def next_word(self, from_word=None):
         """Generate the next word from the markov chain."""
         if from_word is None:
-            word = random.choice(self._chain.keys())
+            word = random.choice(list(self._chain.keys()))
         else:
             if from_word not in self._chain:
                 raise KeyError(from_word)
