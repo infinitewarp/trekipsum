@@ -86,7 +86,7 @@ class ChainWalker(object):
             for next_word, probability in self._chain[from_word]:
                 word = next_word
                 total += probability
-                if probability >= target:
+                if total >= target:
                     break
         return word
 
