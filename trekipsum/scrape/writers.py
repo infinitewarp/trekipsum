@@ -4,7 +4,11 @@ import logging
 import os
 import pickle as _pickle
 import sqlite3
+from collections import defaultdict
 
+import six
+
+from .. import markov as _markov
 from ..dialog.sqlite import DEFAULT_SQLITE_PATH
 from ..scrape.utils import magicdictlist
 
@@ -65,6 +69,27 @@ def sqlite(file_path, dialog_list, **kwargs):
 
 
 @writer
+def markov(file_path, dialog_list, **kwargs):
+    """Write markov chain to sqlite db at specified path."""
+    file_path = os.path.abspath(file_path)
+    logger.info('dumping sqlite markov to %s', file_path)
+
+    dialog_chain_builders = defaultdict(lambda: _markov.SentenceChainBuilder())
+    speaker_chain_builder = _markov.WordChainBuilder()
+
+    for speaker, line in dialog_list:
+        dialog_chain_builders[speaker].process_string(line)
+        speaker_chain_builder.add_next(speaker)
+
+    with _markov.DialogChainDatastore(file_path) as datastore:
+        datastore.reinitialize()
+        datastore.store_chain('speakers', speaker_chain_builder.normalize())
+        for speaker, builder in six.iteritems(dialog_chain_builders):
+            datastore.store_chain(speaker, builder.normalize())
+        datastore.index()
+
+
+@writer
 def pickle(file_path, dialog_dict, **kwargs):
     """Write pickle to file at specified path."""
     file_path = os.path.abspath(file_path)
@@ -79,6 +104,7 @@ def write_assets(dialog_list):
     if os.path.exists(sqlite_path):
         os.remove(sqlite_path)
     sqlite(sqlite_path, dialog_list)
+    markov(sqlite_path, dialog_list)
 
 
 def dictify_dialog(all_dialog, speakers=None):

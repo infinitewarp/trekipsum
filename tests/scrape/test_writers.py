@@ -4,6 +4,7 @@ import tempfile
 
 import six
 
+from trekipsum import markov
 from trekipsum.scrape import writers
 
 
@@ -77,3 +78,18 @@ def test_write_pickle():
         the_file.seek(0)
         written_pickle = pickle.load(the_file)
         assert written_pickle == dummy_data
+
+
+def test_write_markov():
+    """Test markov correctly writes sqlite contents."""
+    dialog_list = [
+        ('SPORK', 'Illogical'),
+        ('PIKARD', 'Engage.'),
+        ('PIKARD', 'Make it so.'),
+    ]
+
+    with tempfile.NamedTemporaryFile(mode='w+b') as the_file:
+        with markov.DialogChainDatastore(the_file.name) as datastore:
+            writers.markov(the_file.name, dialog_list=dialog_list)
+            speakers = datastore.get_vocabulary(context='speakers')
+            assert set(speakers) == set([item[0] for item in dialog_list])
