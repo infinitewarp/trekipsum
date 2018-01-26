@@ -1,6 +1,6 @@
 # Testing
 pytest==3.3.2
-pytest-cov
+pytest-cov==2.5.1
 pytest-pep8
 pytest-flakes
 # pytest-mccabe  # maybe later
