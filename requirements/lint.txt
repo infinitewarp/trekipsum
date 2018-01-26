@@ -1,6 +1,6 @@
 # Coding standards
 flake8==3.5.0
-flake8-blind-except
+flake8-blind-except==0.1.1
 flake8-docstrings>=1.1.0
 flake8-isort
 flake8-quotes
