@@ -1,6 +1,6 @@
 # Testing
-pytest
-pytest-cov
-pytest-pep8
-pytest-flakes
+pytest==3.3.2
+pytest-cov==2.5.1
+pytest-pep8==1.0.6
+pytest-flakes==2.0.0
 # pytest-mccabe  # maybe later

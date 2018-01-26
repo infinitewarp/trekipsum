@@ -1,2 +1,2 @@
-coveralls
-codecov
+coveralls==1.2.0
+codecov==2.0.14

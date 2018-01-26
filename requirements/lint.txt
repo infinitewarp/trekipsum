@@ -1,8 +1,8 @@
 # Coding standards
-flake8
-flake8-blind-except
+flake8==3.5.0
+flake8-blind-except==0.1.1
 flake8-docstrings>=1.1.0
-flake8-isort
-flake8-quotes
-isort
+flake8-isort==2.3
+flake8-quotes==0.13.0
+isort==4.2.15
 pydocstyle>=2.0.0
