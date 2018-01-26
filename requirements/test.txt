@@ -1,5 +1,5 @@
 # Testing
-pytest
+pytest==3.3.2
 pytest-cov
 pytest-pep8
 pytest-flakes
